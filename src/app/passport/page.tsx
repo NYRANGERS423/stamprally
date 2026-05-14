@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { getUserSession } from "@/lib/auth/session";
 import { logoutAction } from "@/lib/actions/user-auth";
 import { displayTagLabel } from "@/lib/passport-tags";
+import { parseSignature } from "@/lib/signature";
+import { SignatureRender } from "@/components/passport/SignatureRender";
 
 export default async function PassportPage() {
   const session = await getUserSession();
@@ -33,6 +35,8 @@ export default async function PassportPage() {
     month: "long",
     day: "numeric",
   });
+
+  const signature = parseSignature(user.signatureSvg);
 
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-10">
@@ -126,6 +130,18 @@ export default async function PassportPage() {
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            {signature && (
+              <div className="mt-5 border-t border-dashed border-brand-700/30 pt-3 dark:border-brand-500/30">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-brand-900/60 dark:text-brand-300/70">
+                  Signature
+                </p>
+                <SignatureRender
+                  data={signature}
+                  className="mt-1 block h-14 w-full text-brand-900 dark:text-brand-200"
+                />
               </div>
             )}
           </div>

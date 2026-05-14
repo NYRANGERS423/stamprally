@@ -7,6 +7,7 @@ import { logoutAction } from "@/lib/actions/user-auth";
 import { PhotoUploader } from "@/components/passport/PhotoUploader";
 import { ProfileForm } from "@/components/passport/ProfileForm";
 import { TagsEditor } from "@/components/passport/TagsEditor";
+import { SignatureCanvas } from "@/components/passport/SignatureCanvas";
 
 export default async function EditPassportPage() {
   const session = await getUserSession();
@@ -66,6 +67,14 @@ export default async function EditPassportPage() {
 
         <Card title="About you">
           <TagsEditor tags={user.tags} />
+        </Card>
+
+        <Card title="Signature">
+          <p className="mb-3 text-xs text-stone-500 dark:text-stone-400">
+            Sign with your mouse or finger. It&apos;ll appear at the bottom of
+            your passport.
+          </p>
+          <SignatureCanvas initialJson={user.signatureSvg} />
         </Card>
 
         <Card title="Locked details">
