@@ -43,18 +43,18 @@ export function DropdownAdminPanel({
         <div className="border-b border-stone-200 px-4 py-3 dark:border-stone-800">
           <h2 className="text-sm font-medium">Add new</h2>
         </div>
-        <form action={action} className="flex gap-2 p-4">
+        <form action={action} className="flex flex-col gap-2 p-4 sm:flex-row">
           <input
             name="name"
             placeholder={`e.g. ${exampleFor(kind)}`}
             required
             maxLength={120}
-            className="flex-1 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-stone-700 dark:bg-stone-900"
+            className="h-11 flex-1 rounded-md border border-stone-300 bg-white px-3 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-stone-700 dark:bg-stone-900"
           />
           <button
             type="submit"
             disabled={pending}
-            className="inline-flex h-10 items-center justify-center rounded-md bg-brand-600 px-4 text-sm font-medium text-white shadow-sm hover:bg-brand-700 disabled:opacity-50"
+            className="inline-flex h-11 items-center justify-center rounded-md bg-brand-600 px-5 text-sm font-medium text-white shadow-sm hover:bg-brand-700 active:bg-brand-700 disabled:opacity-50"
           >
             {pending ? "Adding…" : "Add"}
           </button>
@@ -111,10 +111,10 @@ function DropdownRow({ kind, item }: { kind: DropdownKind; item: Item }) {
           })
         }
         className={
-          "rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 " +
+          "inline-flex h-10 items-center justify-center rounded-md px-3 text-xs font-medium transition-colors disabled:opacity-50 " +
           (item.active
-            ? "border border-stone-300 text-stone-700 hover:bg-stone-100 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
-            : "border border-brand-300 bg-brand-50 text-brand-700 hover:bg-brand-100 dark:border-brand-900 dark:bg-brand-900/30 dark:text-brand-300 dark:hover:bg-brand-900/50")
+            ? "border border-stone-300 text-stone-700 hover:bg-stone-100 active:bg-stone-200 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
+            : "border border-brand-300 bg-brand-50 text-brand-700 hover:bg-brand-100 active:bg-brand-200 dark:border-brand-900 dark:bg-brand-900/30 dark:text-brand-300 dark:hover:bg-brand-900/50")
         }
       >
         {item.active ? "Deactivate" : "Reactivate"}

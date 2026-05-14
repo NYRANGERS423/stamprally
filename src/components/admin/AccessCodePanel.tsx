@@ -81,7 +81,7 @@ export function AccessCodePanel({ codes }: { codes: AccessCode[] }) {
             <button
               type="submit"
               disabled={pending}
-              className="inline-flex h-10 items-center justify-center rounded-md bg-brand-600 px-4 text-sm font-medium text-white shadow-sm hover:bg-brand-700 disabled:opacity-50"
+              className="inline-flex h-11 items-center justify-center rounded-md bg-brand-600 px-5 text-sm font-medium text-white shadow-sm hover:bg-brand-700 active:bg-brand-700 disabled:opacity-50"
             >
               {pending ? "Creating…" : "Create code"}
             </button>
@@ -157,7 +157,7 @@ function CodeRow({ code }: { code: AccessCode }) {
               await toggleAccessCodeAction(code.id, !code.enabled);
             })
           }
-          className="rounded-md border border-stone-300 px-2.5 py-1 text-xs font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
+          className="inline-flex h-10 items-center justify-center rounded-md border border-stone-300 px-3 text-xs font-medium text-stone-700 hover:bg-stone-100 active:bg-stone-200 disabled:opacity-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
         >
           {code.enabled ? "Disable" : "Enable"}
         </button>
@@ -171,7 +171,7 @@ function CodeRow({ code }: { code: AccessCode }) {
               await deleteAccessCodeAction(code.id);
             });
           }}
-          className="rounded-md border border-red-300 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
+          className="inline-flex h-10 items-center justify-center rounded-md border border-red-300 px-3 text-xs font-medium text-red-700 hover:bg-red-50 active:bg-red-100 disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
         >
           Delete
         </button>

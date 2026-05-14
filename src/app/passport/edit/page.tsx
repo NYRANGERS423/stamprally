@@ -24,8 +24,8 @@ export default async function EditPassportPage() {
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-10">
       <div className="w-full max-w-2xl space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
             <p className="font-mono text-xs uppercase tracking-[0.3em] text-brand-700 dark:text-brand-500">
               Stamprally
             </p>
@@ -36,7 +36,7 @@ export default async function EditPassportPage() {
           <form action={logoutAction}>
             <button
               type="submit"
-              className="text-sm text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100"
+              className="inline-flex h-10 items-center justify-center rounded-md px-3 text-sm font-medium text-stone-700 hover:bg-stone-100 active:bg-stone-200 dark:text-stone-300 dark:hover:bg-stone-800"
             >
               Sign out
             </button>
@@ -84,10 +84,10 @@ export default async function EditPassportPage() {
           </p>
         </Card>
 
-        <div className="flex justify-between text-sm">
+        <div className="flex justify-between">
           <Link
             href="/passport"
-            className="text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100"
+            className="inline-flex h-11 items-center justify-center rounded-md px-4 text-sm font-medium text-stone-700 hover:bg-stone-100 active:bg-stone-200 dark:text-stone-300 dark:hover:bg-stone-800"
           >
             ← Back to passport
           </Link>

@@ -38,7 +38,7 @@ export default async function PassportPage() {
           <form action={logoutAction}>
             <button
               type="submit"
-              className="text-sm text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100"
+              className="inline-flex h-10 items-center justify-center rounded-md px-3 text-sm font-medium text-stone-700 hover:bg-stone-100 active:bg-stone-200 dark:text-stone-300 dark:hover:bg-stone-800"
             >
               Sign out
             </button>
@@ -112,7 +112,7 @@ export default async function PassportPage() {
         <div className="mt-6 flex justify-center gap-3 text-sm">
           <Link
             href="/passport/edit"
-            className="inline-flex h-10 items-center justify-center rounded-md border border-stone-300 bg-white px-4 font-medium text-stone-900 transition-colors hover:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:hover:bg-stone-800"
+            className="inline-flex h-12 items-center justify-center rounded-full border border-stone-300 bg-white px-6 font-medium text-stone-900 shadow-sm transition-colors hover:bg-stone-100 active:bg-stone-200 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:hover:bg-stone-800"
           >
             Edit passport
           </Link>

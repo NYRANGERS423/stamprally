@@ -10,3 +10,33 @@
   --color-stamp-500: #d97706;
   --color-stamp-600: #b45309;
 }
+
+/* Mobile / touch friendliness defaults. */
+
+/* Inputs at 16px+ prevent iOS from auto-zooming when focused. */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+@media (min-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 0.875rem; /* 14px on tablet+ for density */
+  }
+}
+
+/* Kill the 300ms tap delay on mobile browsers. */
+button,
+[role="button"],
+a {
+  touch-action: manipulation;
+}
+
+/* Respect the iPhone notch / home indicator. */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

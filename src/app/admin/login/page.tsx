@@ -23,10 +23,10 @@ export default async function AdminLoginPage() {
           </p>
         </div>
         <AdminLoginForm />
-        <div className="text-center text-xs">
+        <div className="flex justify-center">
           <Link
             href="/"
-            className="text-stone-500 hover:text-stone-900 dark:hover:text-stone-100"
+            className="inline-flex h-11 items-center justify-center rounded-md px-4 text-sm font-medium text-stone-600 hover:bg-stone-100 active:bg-stone-200 dark:text-stone-400 dark:hover:bg-stone-800"
           >
             ← Back to home
           </Link>

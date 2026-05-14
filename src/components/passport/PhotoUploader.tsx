@@ -85,11 +85,11 @@ export function PhotoUploader({
             Photo updated.
           </p>
         )}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             type="submit"
             disabled={pending || !previewUrl}
-            className="inline-flex h-9 items-center justify-center rounded-md bg-brand-600 px-3 text-xs font-medium text-white shadow-sm hover:bg-brand-700 disabled:opacity-50"
+            className="inline-flex h-11 items-center justify-center rounded-md bg-brand-600 px-5 text-sm font-medium text-white shadow-sm hover:bg-brand-700 active:bg-brand-700 disabled:opacity-50"
           >
             {pending ? "Uploading…" : "Save photo"}
           </button>
@@ -105,7 +105,7 @@ export function PhotoUploader({
                   if (formRef.current) formRef.current.reset();
                 });
               }}
-              className="inline-flex h-9 items-center justify-center rounded-md border border-red-300 px-3 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
+              className="inline-flex h-11 items-center justify-center rounded-md border border-red-300 px-5 text-sm font-medium text-red-700 hover:bg-red-50 active:bg-red-100 disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
             >
               Remove
             </button>
