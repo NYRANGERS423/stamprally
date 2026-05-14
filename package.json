@@ -19,6 +19,7 @@
   "dependencies": {
     "@node-rs/argon2": "^2.0.2",
     "@prisma/client": "^6.19.3",
+    "iron-session": "^8.0.4",
     "next": "16.2.6",
     "qrcode": "^1.5.4",
     "react": "19.2.4",
