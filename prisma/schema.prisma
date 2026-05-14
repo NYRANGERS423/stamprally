@@ -1,0 +1,197 @@
+// Stamprally — database schema
+// After editing: npx prisma migrate dev --name <description>
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Users (regular passport holders)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id                 String  @id @default(cuid())
+  email              String  @unique
+  passwordHash       String
+  mustChangePassword Boolean @default(false)
+
+  firstName    String
+  lastName     String
+  photoPath    String?
+  signatureSvg String? @db.Text
+  occupation   String?
+
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  companyId    String?
+  company      Company?    @relation(fields: [companyId], references: [id])
+  regionId     String?
+  region       Region?     @relation(fields: [regionId], references: [id])
+
+  startDate      DateTime
+  passportNumber String   @unique
+
+  tags   PassportTag[]
+  stamps Stamp[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastLoginAt DateTime?
+
+  @@index([departmentId])
+  @@index([companyId])
+  @@index([regionId])
+}
+
+model PassportTag {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key    String
+  value  String
+
+  @@index([userId])
+  @@index([key])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin-managed dropdowns
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  active    Boolean  @default(true)
+  users     User[]
+  createdAt DateTime @default(now())
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  active    Boolean  @default(true)
+  users     User[]
+  createdAt DateTime @default(now())
+}
+
+model Region {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  active    Boolean  @default(true)
+  users     User[]
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Signup gate
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AccessCode {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  label     String?
+  enabled   Boolean   @default(true)
+  expiresAt DateTime?
+  maxUses   Int?
+  usesCount Int       @default(0)
+  createdAt DateTime  @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Kiosk users (admin-managed; multi-device concurrent login allowed)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model KioskUser {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  label        String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Events → Destinations → Activities → Stamps
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Event {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  name         String
+  description  String?       @db.Text
+  startDate    DateTime?
+  endDate      DateTime?
+  active       Boolean       @default(true)
+  destinations Destination[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Destination {
+  id          String     @id @default(cuid())
+  eventId     String
+  event       Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name        String
+  description String?    @db.Text
+  order       Int        @default(0)
+  activities  Activity[]
+  createdAt   DateTime   @default(now())
+
+  @@index([eventId])
+}
+
+model Activity {
+  id            String      @id @default(cuid())
+  destinationId String
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  name          String
+  description   String?     @db.Text
+  qrToken       String      @unique
+  fallbackCode  String      @unique
+  active        Boolean     @default(true)
+  stamps        Stamp[]
+  createdAt     DateTime    @default(now())
+
+  @@index([destinationId])
+}
+
+model Stamp {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  stampedAt  DateTime @default(now())
+
+  @@unique([userId, activityId])
+  @@index([userId])
+  @@index([activityId])
+  @@index([stampedAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Runtime config + audit log
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AppConfig {
+  key   String @id
+  value String
+}
+
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  adminUser  String
+  action     String
+  targetType String?
+  targetId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([targetType, targetId])
+}

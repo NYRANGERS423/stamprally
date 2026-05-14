@@ -1,0 +1,44 @@
+# Local development stack. Source is bind-mounted for hot reload.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-stamprally}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stamprally_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-stamprally}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-stamprally}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-stamprally}:${POSTGRES_PASSWORD:-stamprally_dev}@db:5432/${POSTGRES_DB:-stamprally}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme}
+      AUTH_SECRET: ${AUTH_SECRET:-dev-secret-change-me}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+      - /app/.next
+      - uploads:/app/uploads
+
+volumes:
+  postgres_data:
+  uploads:
