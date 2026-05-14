@@ -55,7 +55,7 @@ model PassportTag {
   key    String
   value  String
 
-  @@index([userId])
+  @@unique([userId, key])
   @@index([key])
 }
 

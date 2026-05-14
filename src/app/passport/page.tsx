@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getUserSession } from "@/lib/auth/session";
 import { logoutAction } from "@/lib/actions/user-auth";
+import { displayTagLabel } from "@/lib/passport-tags";
 
 export default async function PassportPage() {
   const session = await getUserSession();
@@ -16,7 +17,12 @@ export default async function PassportPage() {
 
   const user = await db.user.findUnique({
     where: { id: session.userId },
-    include: { department: true, company: true, region: true },
+    include: {
+      department: true,
+      company: true,
+      region: true,
+      tags: { orderBy: { key: "asc" } },
+    },
   });
   if (!user) {
     redirect("/login");
@@ -101,6 +107,27 @@ export default async function PassportPage() {
                 </div>
               )}
             </div>
+
+            {user.tags.length > 0 && (
+              <div className="mt-5 border-t border-dashed border-brand-700/30 pt-4 dark:border-brand-500/30">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-brand-900/60 dark:text-brand-300/70">
+                  About me
+                </p>
+                <ul className="mt-2 flex flex-wrap gap-1.5">
+                  {user.tags.map((tag) => (
+                    <li
+                      key={tag.id}
+                      className="inline-flex items-center gap-1 rounded-full bg-brand-700/10 px-2.5 py-1 text-xs text-brand-900 dark:bg-brand-500/15 dark:text-brand-200"
+                    >
+                      <span className="text-brand-900/60 dark:text-brand-200/70">
+                        {displayTagLabel(tag.key)}:
+                      </span>
+                      <span className="font-medium">{tag.value}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
           <div className="border-t-2 border-dashed border-brand-700/60 bg-brand-50/60 px-6 py-3 dark:border-brand-500/60 dark:bg-brand-900/20">
             <p className="text-center font-mono text-[10px] uppercase tracking-[0.3em] text-brand-900/70 dark:text-brand-300/70">

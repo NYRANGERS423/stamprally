@@ -6,6 +6,7 @@ import { getPhotoSettings } from "@/lib/app-config";
 import { logoutAction } from "@/lib/actions/user-auth";
 import { PhotoUploader } from "@/components/passport/PhotoUploader";
 import { ProfileForm } from "@/components/passport/ProfileForm";
+import { TagsEditor } from "@/components/passport/TagsEditor";
 
 export default async function EditPassportPage() {
   const session = await getUserSession();
@@ -15,7 +16,12 @@ export default async function EditPassportPage() {
   const [user, photoSettings] = await Promise.all([
     db.user.findUnique({
       where: { id: session.userId },
-      include: { department: true, company: true, region: true },
+      include: {
+        department: true,
+        company: true,
+        region: true,
+        tags: { orderBy: { key: "asc" } },
+      },
     }),
     getPhotoSettings(),
   ]);
@@ -56,6 +62,10 @@ export default async function EditPassportPage() {
             lastName={user.lastName}
             occupation={user.occupation}
           />
+        </Card>
+
+        <Card title="About you">
+          <TagsEditor tags={user.tags} />
         </Card>
 
         <Card title="Locked details">
