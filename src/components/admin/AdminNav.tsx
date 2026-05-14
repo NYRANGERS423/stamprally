@@ -9,6 +9,7 @@ const NAV = [
   { href: "/admin/dropdowns/departments", label: "Departments" },
   { href: "/admin/dropdowns/companies", label: "Companies" },
   { href: "/admin/dropdowns/regions", label: "Regions" },
+  { href: "/admin/settings", label: "Settings" },
 ];
 
 export function AdminNav() {

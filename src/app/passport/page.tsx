@@ -1,3 +1,5 @@
+import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getUserSession } from "@/lib/auth/session";
@@ -49,30 +51,56 @@ export default async function PassportPage() {
               Passport · Stamprally
             </p>
           </div>
-          <div className="space-y-4 p-6">
-            <Row label="Surname / Name">
-              <span className="text-lg font-semibold uppercase tracking-wide">
-                {user.lastName}
-                <br />
-                <span className="font-normal">{user.firstName}</span>
-              </span>
-            </Row>
-            <div className="grid grid-cols-2 gap-4">
+          <div className="p-6">
+            <div className="flex gap-4">
+              <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-md border-2 border-brand-700/40 bg-white dark:border-brand-500/40 dark:bg-stone-900">
+                {user.photoPath ? (
+                  <Image
+                    src={`/api/uploads/${user.photoPath}`}
+                    alt={`${user.firstName} ${user.lastName}`}
+                    fill
+                    sizes="112px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-xs text-stone-400">
+                    No photo
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 space-y-2">
+                <div>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-brand-900/60 dark:text-brand-300/70">
+                    Surname / Name
+                  </p>
+                  <p className="text-lg font-semibold uppercase leading-tight tracking-wide">
+                    {user.lastName}
+                  </p>
+                  <p className="text-base leading-tight">{user.firstName}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3">
               <Row label="Passport number">
                 <span className="font-mono text-sm">
                   {user.passportNumber}
                 </span>
               </Row>
               <Row label="Citizen since">{startedOn}</Row>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
               <Row label="Nationality">{user.department?.name ?? "—"}</Row>
               <Row label="Place of issue">{user.region?.name ?? "—"}</Row>
+              <div className="col-span-2">
+                <Row label="Issuing authority">
+                  {user.company?.name ?? "—"}
+                </Row>
+              </div>
+              {user.occupation && (
+                <div className="col-span-2">
+                  <Row label="Occupation">{user.occupation}</Row>
+                </div>
+              )}
             </div>
-            <Row label="Issuing authority">{user.company?.name ?? "—"}</Row>
-            {user.occupation && (
-              <Row label="Occupation">{user.occupation}</Row>
-            )}
           </div>
           <div className="border-t-2 border-dashed border-brand-700/60 bg-brand-50/60 px-6 py-3 dark:border-brand-500/60 dark:bg-brand-900/20">
             <p className="text-center font-mono text-[10px] uppercase tracking-[0.3em] text-brand-900/70 dark:text-brand-300/70">
@@ -81,10 +109,14 @@ export default async function PassportPage() {
           </div>
         </div>
 
-        <p className="mt-6 text-center text-xs text-stone-500 dark:text-stone-400">
-          Phase 2: photo, signature, tags & check-in. Phase 3: events &
-          activities. Phase 4: leaderboards & accolades.
-        </p>
+        <div className="mt-6 flex justify-center gap-3 text-sm">
+          <Link
+            href="/passport/edit"
+            className="inline-flex h-10 items-center justify-center rounded-md border border-stone-300 bg-white px-4 font-medium text-stone-900 transition-colors hover:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:hover:bg-stone-800"
+          >
+            Edit passport
+          </Link>
+        </div>
       </div>
     </main>
   );
