@@ -5,7 +5,8 @@ export interface Theme {
   label: string;
   description: string;
   emoji: string;
-  // Tailwind utility class strings applied at each layer of the passport card.
+
+  // Tailwind classes
   pageBgClass: string;
   cardClass: string;
   headerStripClass: string;
@@ -20,8 +21,19 @@ export interface Theme {
   stampChipClass: string;
   stampChipTextClass: string;
   ctaClass: string;
-  // Tiny swatch for the theme selector card.
   swatchGradient: string;
+
+  // Item 1: subtle decorative SVG pattern, applied as an absolute-positioned
+  // overlay on the passport card. URL-encoded SVG data URIs.
+  bgPattern: string;
+  stampsBgPattern: string;
+
+  // Item 3: SVG path d= for the stamp chip icon (24×24 viewBox, stroke-based).
+  stampSvgPath: string;
+
+  // Item 6: class wired in globals.css that runs the theme's "stamp lands"
+  // animation. Applied to the just-stamped chip after a successful check-in.
+  stampLandClass: string;
 }
 
 const THEMES_LIST: Theme[] = [
@@ -57,12 +69,20 @@ const THEMES_LIST: Theme[] = [
     ctaClass:
       "bg-stamp-600 text-white hover:bg-stamp-500 active:bg-stamp-500",
     swatchGradient: "from-brand-100 via-brand-200 to-amber-100",
+    // Subtle navy dot grid
+    bgPattern:
+      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><circle cx='10' cy='10' r='0.8' fill='%231e3a8a' opacity='0.18'/></svg>\")",
+    stampsBgPattern:
+      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28'><path d='M14 4 L18 12 L26 14 L18 16 L14 24 L10 16 L2 14 L10 12 Z' fill='%23b45309' opacity='0.07'/></svg>\")",
+    stampSvgPath: "M5 12l5 5L20 7",
+    stampLandClass: "stamp-land-classic",
   },
   {
     id: "apm-terminals",
     label: "APM Terminals",
-    description: "Port-side palette — deep navy + container orange.",
-    emoji: "🚢",
+    description:
+      "Container terminal — STS cranes, vessels, and stacks of TEUs.",
+    emoji: "🏗️",
     pageBgClass: "",
     cardClass:
       "border-2 border-orange-500 bg-gradient-to-br from-slate-100 to-slate-200 shadow-lg dark:border-orange-400 dark:from-slate-900 dark:to-slate-800",
@@ -90,6 +110,15 @@ const THEMES_LIST: Theme[] = [
     ctaClass:
       "bg-orange-500 text-white hover:bg-orange-600 active:bg-orange-600",
     swatchGradient: "from-slate-900 via-orange-500 to-orange-300",
+    // Tiled container outlines with end-door corrugation lines
+    bgPattern:
+      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='40'><rect x='8' y='12' width='28' height='16' rx='1' stroke='%23f97316' stroke-width='1' fill='none' opacity='0.18'/><line x1='12' y1='14' x2='12' y2='26' stroke='%23f97316' stroke-width='0.5' opacity='0.18'/><line x1='32' y1='14' x2='32' y2='26' stroke='%23f97316' stroke-width='0.5' opacity='0.18'/><rect x='44' y='12' width='28' height='16' rx='1' stroke='%23f97316' stroke-width='1' fill='none' opacity='0.18'/><line x1='48' y1='14' x2='48' y2='26' stroke='%23f97316' stroke-width='0.5' opacity='0.18'/><line x1='68' y1='14' x2='68' y2='26' stroke='%23f97316' stroke-width='0.5' opacity='0.18'/></svg>\")",
+    stampsBgPattern:
+      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><path d='M-5 25 L25 -5 M-5 35 L35 -5 M-5 45 L45 -5' stroke='%23f97316' stroke-width='3' opacity='0.08'/></svg>\")",
+    // Container outline (rect + 3 corrugation lines)
+    stampSvgPath:
+      "M3 9 L21 9 L21 15 L3 15 Z M7 9 L7 15 M11 9 L11 15 M15 9 L15 15 M18 9 L18 15",
+    stampLandClass: "stamp-land-container",
   },
   {
     id: "earth-day",
@@ -123,6 +152,15 @@ const THEMES_LIST: Theme[] = [
     ctaClass:
       "bg-emerald-600 text-white hover:bg-emerald-500 active:bg-emerald-500",
     swatchGradient: "from-emerald-200 via-lime-200 to-sky-200",
+    // Scattered leaves
+    bgPattern:
+      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><path d='M15 25 q 5 -10 13 -3 q -1 9 -13 3 z' fill='%23059669' opacity='0.18'/><path d='M27 23 q 2 -1 3 0' stroke='%23047857' stroke-width='0.5' fill='none' opacity='0.3'/><path d='M40 48 q 5 -8 12 -2 q -1 8 -12 2 z' fill='%23059669' opacity='0.18'/></svg>\")",
+    stampsBgPattern:
+      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='50' height='50'><path d='M25 10 q 8 5 0 25 q -8 -20 0 -25 z' fill='%23059669' opacity='0.08'/></svg>\")",
+    // Leaf outline with center stem
+    stampSvgPath:
+      "M12 3 C 7 7 7 17 12 21 C 17 17 17 7 12 3 Z M12 5 L12 19",
+    stampLandClass: "stamp-land-leaf",
   },
 ];
 

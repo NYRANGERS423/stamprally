@@ -92,7 +92,13 @@ export default async function PassportPage({
       {stamped && <StampedFlash activityName={stamped} />}
       <main className="flex flex-1 flex-col items-center px-4 py-6 sm:px-6 sm:py-10">
         <div className="w-full max-w-md">
-        <div className={"overflow-hidden rounded-2xl " + theme.cardClass}>
+        <div className={"relative overflow-hidden rounded-2xl " + theme.cardClass}>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{ backgroundImage: theme.bgPattern }}
+          />
+          <div className="relative">
           <div className={theme.headerStripClass}>
             <p className={theme.headerTextClass}>
               {theme.emoji} Passport · Stamprally
@@ -187,6 +193,7 @@ export default async function PassportPage({
               Stamps on next page
             </p>
           </div>
+          </div>
         </div>
 
         <div className="mt-6">
@@ -235,7 +242,13 @@ export default async function PassportPage({
           </section>
         )}
 
-        <section className={`mt-6 overflow-hidden rounded-2xl ${theme.stampsCardClass}`}>
+        <section className={`relative mt-6 overflow-hidden rounded-2xl ${theme.stampsCardClass}`}>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{ backgroundImage: theme.stampsBgPattern }}
+          />
+          <div className="relative">
           <div className={theme.stampsHeaderClass}>
             <p className={theme.stampsHeaderTextClass}>
               Stamps · {stamps.length}
@@ -254,27 +267,31 @@ export default async function PassportPage({
                     {group.eventName}
                   </h3>
                   <ul className="mt-2 flex flex-wrap gap-2">
-                    {group.stamps.map((s) => (
-                      <li
-                        key={s.id}
-                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs ${theme.stampChipClass}`}
-                      >
-                        <StampBadgeIcon />
-                        <span className={`font-semibold ${theme.stampChipTextClass}`}>
-                          {s.activity.name}
-                        </span>
-                        <span className="text-stone-500 dark:text-stone-400">
-                          {s.stampedAt.toLocaleDateString(undefined, {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </span>
-                      </li>
-                    ))}
+                    {group.stamps.map((s) => {
+                      const isNew = stamped === s.activity.name;
+                      return (
+                        <li
+                          key={s.id}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs ${theme.stampChipClass} ${isNew ? theme.stampLandClass : ""}`}
+                        >
+                          <ThemeStampIcon path={theme.stampSvgPath} />
+                          <span className={`font-semibold ${theme.stampChipTextClass}`}>
+                            {s.activity.name}
+                          </span>
+                          <span className="text-stone-500 dark:text-stone-400">
+                            {s.stampedAt.toLocaleDateString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               ))
             )}
+          </div>
           </div>
         </section>
 
@@ -336,7 +353,7 @@ function StampNewIcon() {
   );
 }
 
-function StampBadgeIcon() {
+function ThemeStampIcon({ path }: { path: string }) {
   return (
     <svg
       width="14"
@@ -344,13 +361,13 @@ function StampBadgeIcon() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.5"
+      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
       className="text-stamp-600"
       aria-hidden="true"
     >
-      <path d="M5 12l5 5L20 7" />
+      <path d={path} />
     </svg>
   );
 }
