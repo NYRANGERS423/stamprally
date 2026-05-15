@@ -30,12 +30,18 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        <div className="mt-12 text-xs">
+        <div className="mt-12 flex justify-center gap-6 text-xs">
           <Link
             href="/admin/login"
             className="text-stone-500 underline-offset-4 hover:text-stone-900 hover:underline dark:hover:text-stone-100"
           >
             Admin sign-in
+          </Link>
+          <Link
+            href="/kiosk/login"
+            className="text-stone-500 underline-offset-4 hover:text-stone-900 hover:underline dark:hover:text-stone-100"
+          >
+            Kiosk sign-in
           </Link>
         </div>
       </div>

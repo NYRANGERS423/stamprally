@@ -13,6 +13,13 @@ export interface AuthFormState {
   fieldErrors?: Record<string, string>;
 }
 
+function safeRedirectPath(raw: unknown): string | null {
+  if (typeof raw !== "string" || raw.length === 0) return null;
+  if (raw.length > 200) return null;
+  if (!raw.startsWith("/") || raw.startsWith("//")) return null;
+  return raw;
+}
+
 const signupSchema = z
   .object({
     accessCode: z.string().trim().min(1, "Access code is required"),
@@ -209,10 +216,12 @@ export async function loginAction(
     data: { lastLoginAt: new Date() },
   });
 
+  const next = safeRedirectPath(formData.get("next"));
+
   if (user.mustChangePassword) {
     redirect("/force-change-password");
   }
-  redirect("/passport");
+  redirect(next ?? "/passport");
 }
 
 export async function logoutAction() {

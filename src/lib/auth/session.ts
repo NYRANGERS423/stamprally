@@ -14,6 +14,7 @@ export interface AdminSession {
 
 export interface KioskSession {
   kioskUserId?: string;
+  username?: string;
 }
 
 function requireSecret(): string {

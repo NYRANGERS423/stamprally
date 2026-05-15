@@ -17,18 +17,52 @@ export default async function PassportPage() {
     redirect("/force-change-password");
   }
 
-  const user = await db.user.findUnique({
-    where: { id: session.userId },
-    include: {
-      department: true,
-      company: true,
-      region: true,
-      tags: { orderBy: { key: "asc" } },
-    },
-  });
+  const [user, stamps] = await Promise.all([
+    db.user.findUnique({
+      where: { id: session.userId },
+      include: {
+        department: true,
+        company: true,
+        region: true,
+        tags: { orderBy: { key: "asc" } },
+      },
+    }),
+    db.stamp.findMany({
+      where: { userId: session.userId },
+      orderBy: { stampedAt: "desc" },
+      include: {
+        activity: {
+          select: {
+            id: true,
+            name: true,
+            destination: {
+              select: {
+                name: true,
+                event: { select: { id: true, name: true } },
+              },
+            },
+          },
+        },
+      },
+    }),
+  ]);
   if (!user) {
     redirect("/login");
   }
+
+  const stampsByEvent = new Map<
+    string,
+    { eventName: string; stamps: typeof stamps }
+  >();
+  for (const s of stamps) {
+    const eId = s.activity.destination.event.id;
+    const eName = s.activity.destination.event.name;
+    if (!stampsByEvent.has(eId)) {
+      stampsByEvent.set(eId, { eventName: eName, stamps: [] });
+    }
+    stampsByEvent.get(eId)!.stamps.push(s);
+  }
+  const eventGroups = Array.from(stampsByEvent.entries());
 
   const startedOn = user.startDate.toLocaleDateString(undefined, {
     year: "numeric",
@@ -147,10 +181,64 @@ export default async function PassportPage() {
           </div>
           <div className="border-t-2 border-dashed border-brand-700/60 bg-brand-50/60 px-6 py-3 dark:border-brand-500/60 dark:bg-brand-900/20">
             <p className="text-center font-mono text-[10px] uppercase tracking-[0.3em] text-brand-900/70 dark:text-brand-300/70">
-              No stamps yet — events coming soon
+              Stamps on next page
             </p>
           </div>
         </div>
+
+        <div className="mt-6">
+          <Link
+            href="/check-in"
+            className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-stamp-600 px-6 text-base font-semibold text-white shadow-md transition-colors hover:bg-stamp-500 active:bg-stamp-500"
+          >
+            <StampNewIcon />
+            Stamp new place
+          </Link>
+        </div>
+
+        <section className="mt-6 overflow-hidden rounded-2xl border-2 border-brand-700 bg-amber-50/60 dark:border-brand-500 dark:bg-amber-950/20">
+          <div className="border-b-2 border-dashed border-brand-700/60 px-6 py-3 dark:border-brand-500/60">
+            <p className="text-center font-mono text-xs uppercase tracking-[0.4em] text-brand-900 dark:text-brand-300">
+              Stamps · {stamps.length}
+            </p>
+          </div>
+          <div className="space-y-5 p-5">
+            {eventGroups.length === 0 ? (
+              <p className="py-4 text-center text-sm text-stone-600 dark:text-stone-400">
+                No stamps yet. Tap &ldquo;Stamp new place&rdquo; at any event
+                to collect your first.
+              </p>
+            ) : (
+              eventGroups.map(([eId, group]) => (
+                <div key={eId}>
+                  <h3 className="font-mono text-[10px] uppercase tracking-[0.2em] text-brand-900/70 dark:text-brand-300/80">
+                    {group.eventName}
+                  </h3>
+                  <ul className="mt-2 flex flex-wrap gap-2">
+                    {group.stamps.map((s) => (
+                      <li
+                        key={s.id}
+                        className="inline-flex items-center gap-1.5 rounded-full border-2 border-stamp-600 bg-white px-3 py-1.5 text-xs shadow-sm dark:bg-stone-900"
+                      >
+                        <StampBadgeIcon />
+                        <span className="font-semibold text-stone-900 dark:text-stone-100">
+                          {s.activity.name}
+                        </span>
+                        <span className="text-stone-500 dark:text-stone-400">
+                          {s.activity.destination.name} ·{" "}
+                          {s.stampedAt.toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
 
         <div className="mt-6 flex justify-center gap-3 text-sm">
           <Link
@@ -179,5 +267,44 @@ function Row({
       </p>
       <div className="text-stone-900 dark:text-stone-100">{children}</div>
     </div>
+  );
+}
+
+function StampNewIcon() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
+      <path d="M7 7h10l1 4H6z" />
+      <path d="M5 13h14v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" />
+    </svg>
+  );
+}
+
+function StampBadgeIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="text-stamp-600"
+      aria-hidden="true"
+    >
+      <path d="M5 12l5 5L20 7" />
+    </svg>
   );
 }

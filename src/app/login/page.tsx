@@ -3,8 +3,13 @@ import { redirect } from "next/navigation";
 import { getUserSession } from "@/lib/auth/session";
 import { LoginForm } from "@/components/auth/LoginForm";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
   const session = await getUserSession();
+  const { next } = await searchParams;
   if (session.userId) {
     redirect(session.mustChangePassword ? "/force-change-password" : "/passport");
   }
@@ -19,7 +24,7 @@ export default async function LoginPage() {
             Sign in
           </h1>
         </div>
-        <LoginForm />
+        <LoginForm next={next} />
         <div className="text-center text-sm text-stone-600 dark:text-stone-400">
           Don&apos;t have a passport yet?{" "}
           <Link
