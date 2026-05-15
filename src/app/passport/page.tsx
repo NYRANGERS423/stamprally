@@ -11,8 +11,6 @@ import { StampedFlash } from "@/components/passport/StampedFlash";
 import { UserHeader } from "@/components/user/UserHeader";
 import { getTheme, THEMES } from "@/lib/themes";
 import {
-  accoladeChips,
-  computeAutoAccolades,
   computePersonalStats,
   loadManualAccolades,
 } from "@/lib/passport-stats";
@@ -46,7 +44,7 @@ export default async function PassportPage({
     redirect("/force-change-password");
   }
 
-  const [user, stamps, stats, autoAccolades, manualAccolades] = await Promise.all([
+  const [user, stamps, stats, manualAccolades] = await Promise.all([
     db.user.findUnique({
       where: { id: session.userId },
       include: {
@@ -70,11 +68,9 @@ export default async function PassportPage({
       },
     }),
     computePersonalStats(session.userId),
-    computeAutoAccolades(session.userId),
     loadManualAccolades(session.userId),
   ]);
-  const accolades = accoladeChips(autoAccolades);
-  const totalAccolades = accolades.length + manualAccolades.length;
+  const totalAccolades = manualAccolades.length;
   if (!user) {
     redirect("/login");
   }
@@ -252,16 +248,6 @@ export default async function PassportPage({
                   </li>
                 );
               })}
-              {accolades.map((a, i) => (
-                <li
-                  key={`${a.kind}-${i}`}
-                  title={a.description}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-stamp-600/10 px-3 py-1.5 text-xs font-medium text-stamp-700 dark:bg-stamp-600/20 dark:text-stamp-500"
-                >
-                  <StarIcon />
-                  {a.label}
-                </li>
-              ))}
             </ul>
           ) : (
             <p className="px-4 py-6 text-center text-xs text-stone-500 dark:text-stone-400">
@@ -464,16 +450,3 @@ function Stat({ label, value }: { label: string; value: number }) {
   );
 }
 
-function StarIcon() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M12 2l2.39 6.95H22l-5.8 4.21L18.45 21 12 16.78 5.55 21l2.25-7.84L2 8.95h7.61L12 2z" />
-    </svg>
-  );
-}

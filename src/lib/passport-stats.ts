@@ -14,19 +14,6 @@ export interface PersonalStats {
   }>;
 }
 
-export interface Accolade {
-  kind: string;
-  label: string;
-  description: string;
-}
-
-export interface UserAccolades {
-  globetrotterEventNames: string[]; // events where user stamped every active activity
-  earlyBirdActivityNames: string[]; // activities where user was the first stamper
-  marathoner: boolean; // stamped at 3+ different events
-  firstStamper: boolean; // has at least one stamp
-}
-
 export interface ManualAccolade {
   id: string;
   label: string;
@@ -52,8 +39,6 @@ export async function loadManualAccolades(
     },
   });
 }
-
-const MARATHONER_THRESHOLD = 3;
 
 export async function computePersonalStats(
   userId: string,
@@ -113,112 +98,4 @@ export async function computePersonalStats(
     eventsParticipated: eventMap.size,
     eventCompletion,
   };
-}
-
-export async function computeAutoAccolades(
-  userId: string,
-): Promise<UserAccolades> {
-  const userStamps = await db.stamp.findMany({
-    where: { userId },
-    select: {
-      stampedAt: true,
-      activity: {
-        select: {
-          id: true,
-          name: true,
-          active: true,
-          event: { select: { id: true, name: true, active: true } },
-        },
-      },
-    },
-  });
-
-  if (userStamps.length === 0) {
-    return {
-      globetrotterEventNames: [],
-      earlyBirdActivityNames: [],
-      marathoner: false,
-      firstStamper: false,
-    };
-  }
-
-  // Marathoner — ≥3 distinct events stamped at
-  const stampedEventIds = new Set(
-    userStamps.map((s) => s.activity.event.id),
-  );
-  const marathoner = stampedEventIds.size >= MARATHONER_THRESHOLD;
-
-  // Globetrotter — for each event we've touched, did we stamp every active activity?
-  const globetrotterEventNames: string[] = [];
-  for (const eId of stampedEventIds) {
-    const event = userStamps.find(
-      (s) => s.activity.event.id === eId,
-    )!.activity.event;
-    if (!event.active) continue;
-    const activeActivitiesInEvent = await db.activity.count({
-      where: { active: true, eventId: eId },
-    });
-    if (activeActivitiesInEvent === 0) continue;
-    const userStampedActiveInEvent = userStamps.filter(
-      (s) => s.activity.event.id === eId && s.activity.active,
-    ).length;
-    if (userStampedActiveInEvent === activeActivitiesInEvent) {
-      globetrotterEventNames.push(event.name);
-    }
-  }
-
-  // Early Bird — user was the first to stamp this activity. One findFirst
-  // per activity is fine at V1 scale. If we ever need to optimize, switch
-  // to a `SELECT DISTINCT ON (activityId)` raw query.
-  const earlyBirdActivityNames: string[] = [];
-  for (const s of userStamps) {
-    const first = await db.stamp.findFirst({
-      where: { activityId: s.activity.id },
-      orderBy: { stampedAt: "asc" },
-      select: { userId: true },
-    });
-    if (first?.userId === userId) {
-      earlyBirdActivityNames.push(s.activity.name);
-    }
-  }
-
-  return {
-    globetrotterEventNames,
-    earlyBirdActivityNames,
-    marathoner,
-    firstStamper: true,
-  };
-}
-
-export function accoladeChips(acc: UserAccolades): Accolade[] {
-  const list: Accolade[] = [];
-  if (acc.firstStamper) {
-    list.push({
-      kind: "first_stamper",
-      label: "First stamp",
-      description: "Collected your first stamp.",
-    });
-  }
-  if (acc.marathoner) {
-    list.push({
-      kind: "marathoner",
-      label: "Marathoner",
-      description: `Participated in ${MARATHONER_THRESHOLD}+ different events.`,
-    });
-  }
-  for (const ev of acc.globetrotterEventNames) {
-    list.push({
-      kind: "globetrotter",
-      label: "Globetrotter",
-      description: `Stamped every active activity in ${ev}.`,
-    });
-  }
-  for (const act of acc.earlyBirdActivityNames) {
-    list.push({
-      kind: "early_bird",
-      label: "Early bird",
-      description: `First person to stamp ${act}.`,
-    });
-  }
-  return list;
 }
