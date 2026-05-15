@@ -29,6 +29,10 @@ export interface Theme {
   tagChipKeyClass: string;
   dividerClass: string;
   signatureColorClass: string;
+  // High-contrast label colour for event headings INSIDE the stamps card.
+  // The normal labelClass uses opacity tricks that vanish against the tinted
+  // stamps-card background.
+  stampsLabelClass: string;
 
   // Decorative SVG pattern overlays.
   bgPattern: string;
@@ -79,6 +83,8 @@ const THEMES_LIST: Theme[] = [
     tagChipKeyClass: "text-stone-500 dark:text-stone-400",
     dividerClass: "border-brand-700/30 dark:border-brand-500/30",
     signatureColorClass: "text-brand-900 dark:text-brand-200",
+    stampsLabelClass:
+      "font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-900 dark:text-brand-200",
     bgPattern:
       "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><circle cx='10' cy='10' r='0.8' fill='%231e3a8a' opacity='0.18'/></svg>\")",
     stampsBgPattern:
@@ -124,6 +130,8 @@ const THEMES_LIST: Theme[] = [
     tagChipKeyClass: "text-slate-500 dark:text-orange-300/70",
     dividerClass: "border-orange-500/50",
     signatureColorClass: "text-slate-900 dark:text-orange-200",
+    stampsLabelClass:
+      "font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-900 dark:text-orange-200",
     bgPattern:
       "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='40'><rect x='8' y='12' width='28' height='16' rx='1' stroke='%23f97316' stroke-width='1' fill='none' opacity='0.18'/><line x1='12' y1='14' x2='12' y2='26' stroke='%23f97316' stroke-width='0.5' opacity='0.18'/><line x1='32' y1='14' x2='32' y2='26' stroke='%23f97316' stroke-width='0.5' opacity='0.18'/><rect x='44' y='12' width='28' height='16' rx='1' stroke='%23f97316' stroke-width='1' fill='none' opacity='0.18'/><line x1='48' y1='14' x2='48' y2='26' stroke='%23f97316' stroke-width='0.5' opacity='0.18'/><line x1='68' y1='14' x2='68' y2='26' stroke='%23f97316' stroke-width='0.5' opacity='0.18'/></svg>\")",
     stampsBgPattern:
@@ -169,6 +177,8 @@ const THEMES_LIST: Theme[] = [
     tagChipKeyClass: "text-stone-500 dark:text-emerald-300/70",
     dividerClass: "border-emerald-600/50",
     signatureColorClass: "text-emerald-900 dark:text-emerald-200",
+    stampsLabelClass:
+      "font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-900 dark:text-emerald-200",
     bgPattern:
       "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><path d='M15 25 q 5 -10 13 -3 q -1 9 -13 3 z' fill='%23059669' opacity='0.18'/><path d='M27 23 q 2 -1 3 0' stroke='%23047857' stroke-width='0.5' fill='none' opacity='0.3'/><path d='M40 48 q 5 -8 12 -2 q -1 8 -12 2 z' fill='%23059669' opacity='0.18'/></svg>\")",
     stampsBgPattern:

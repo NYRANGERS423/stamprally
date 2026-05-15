@@ -276,9 +276,11 @@ export default async function PassportPage({
             ) : (
               eventGroups.map(([eId, group]) => (
                 <div key={eId}>
-                  <div className="mb-3 flex items-end justify-between border-b border-dashed border-current/20 pb-2">
-                    <h3 className={theme.labelClass}>{group.eventName}</h3>
-                    <span className={`${theme.labelClass} text-[9px]`}>
+                  <div className={`mb-3 flex items-end justify-between border-b border-dashed pb-2 ${theme.dividerClass}`}>
+                    <h3 className={theme.stampsLabelClass}>
+                      {group.eventName}
+                    </h3>
+                    <span className={`${theme.stampsLabelClass} text-[9px] opacity-70`}>
                       {group.stamps.length} stamp
                       {group.stamps.length === 1 ? "" : "s"}
                     </span>
