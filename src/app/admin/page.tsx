@@ -12,6 +12,10 @@ export default async function AdminDashboard() {
     departmentCount,
     companyCount,
     regionCount,
+    eventCount,
+    activeEventCount,
+    kioskUserCount,
+    stampCount,
   ] = await Promise.all([
     db.user.count(),
     db.accessCode.count(),
@@ -19,6 +23,10 @@ export default async function AdminDashboard() {
     db.department.count(),
     db.company.count(),
     db.region.count(),
+    db.event.count(),
+    db.event.count({ where: { active: true } }),
+    db.kioskUser.count(),
+    db.stamp.count(),
   ]);
 
   return (
@@ -32,6 +40,13 @@ export default async function AdminDashboard() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard label="Users" value={userCount} />
+        <StatCard label="Stamps collected" value={stampCount} />
+        <StatCard
+          label="Events"
+          value={`${activeEventCount} / ${eventCount}`}
+          hint="active / total"
+        />
+        <StatCard label="Kiosk users" value={kioskUserCount} />
         <StatCard
           label="Access codes"
           value={`${enabledAccessCodeCount} / ${accessCodeCount}`}

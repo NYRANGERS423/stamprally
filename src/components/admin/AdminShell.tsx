@@ -6,6 +6,8 @@ import { useCallback, useEffect, useState } from "react";
 
 const NAV = [
   { href: "/admin", label: "Dashboard" },
+  { href: "/admin/events", label: "Events" },
+  { href: "/admin/kiosk-users", label: "Kiosk users" },
   { href: "/admin/access-codes", label: "Access codes" },
   { href: "/admin/dropdowns/departments", label: "Departments" },
   { href: "/admin/dropdowns/companies", label: "Companies" },

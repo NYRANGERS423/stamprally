@@ -1,0 +1,115 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth/admin-guard";
+import { generateQrToken, generateUniqueFallbackCode } from "@/lib/qr-codes";
+
+export interface ActivityFormState {
+  error?: string;
+  ok?: boolean;
+}
+
+const baseFields = z.object({
+  name: z.string().trim().min(1, "Name is required").max(120),
+  description: z
+    .string()
+    .trim()
+    .max(2000)
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => (v ? v : null)),
+});
+
+function revalidate(eventId: string, destId: string) {
+  revalidatePath(`/admin/events/${eventId}/destinations/${destId}`);
+}
+
+export async function createActivityAction(
+  eventId: string,
+  destId: string,
+  _prev: ActivityFormState,
+  formData: FormData,
+): Promise<ActivityFormState> {
+  await requireAdmin();
+  const parsed = baseFields.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+  const qrToken = generateQrToken();
+  const fallbackCode = await generateUniqueFallbackCode();
+  await db.activity.create({
+    data: {
+      destinationId: destId,
+      name: parsed.data.name,
+      description: parsed.data.description,
+      qrToken,
+      fallbackCode,
+    },
+  });
+  revalidate(eventId, destId);
+  return { ok: true };
+}
+
+export async function updateActivityAction(
+  eventId: string,
+  destId: string,
+  activityId: string,
+  _prev: ActivityFormState,
+  formData: FormData,
+): Promise<ActivityFormState> {
+  await requireAdmin();
+  const parsed = baseFields.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+  await db.activity.update({
+    where: { id: activityId },
+    data: {
+      name: parsed.data.name,
+      description: parsed.data.description,
+    },
+  });
+  revalidate(eventId, destId);
+  return { ok: true };
+}
+
+export async function toggleActivityActiveAction(
+  eventId: string,
+  destId: string,
+  activityId: string,
+  active: boolean,
+): Promise<void> {
+  await requireAdmin();
+  await db.activity.update({
+    where: { id: activityId },
+    data: { active },
+  });
+  revalidate(eventId, destId);
+}
+
+export async function regenerateActivityCodesAction(
+  eventId: string,
+  destId: string,
+  activityId: string,
+): Promise<void> {
+  await requireAdmin();
+  const qrToken = generateQrToken();
+  const fallbackCode = await generateUniqueFallbackCode();
+  await db.activity.update({
+    where: { id: activityId },
+    data: { qrToken, fallbackCode },
+  });
+  revalidate(eventId, destId);
+}
+
+export async function deleteActivityAction(
+  eventId: string,
+  destId: string,
+  activityId: string,
+): Promise<void> {
+  await requireAdmin();
+  await db.activity.delete({ where: { id: activityId } });
+  revalidate(eventId, destId);
+}
