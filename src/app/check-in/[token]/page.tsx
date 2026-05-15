@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getUserSession } from "@/lib/auth/session";
 import { UserHeader } from "@/components/user/UserHeader";
+import { AutoRedirect } from "@/components/passport/AutoRedirect";
 
 type CheckInResult =
   | { kind: "ok"; activityName: string; eventName: string }
@@ -90,25 +91,24 @@ export default async function CheckInByToken({
   }
 
   const result = await performCheckIn(session.userId, token);
-
-  // Seamless path: brand-new stamp → straight back to /passport with a flash.
-  // Non-happy paths (already / inactive / not_found) still show the card.
-  if (result.kind === "ok") {
-    redirect(`/passport?stamped=${encodeURIComponent(result.activityName)}`);
-  }
+  const isOk = result.kind === "ok";
+  const passportHref = isOk
+    ? `/passport?stamped=${encodeURIComponent(result.activityName)}`
+    : "/passport";
 
   return (
     <>
       <UserHeader active="stamp" />
+      {isOk && <AutoRedirect href={passportHref} delayMs={1200} />}
       <main className="flex flex-1 items-center justify-center px-4 py-6 sm:px-6 sm:py-10">
         <div className="w-full max-w-sm">
           <ResultCard result={result} />
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
-              href="/passport"
+              href={passportHref}
               className="inline-flex h-12 items-center justify-center rounded-full bg-brand-600 px-6 text-sm font-medium text-white shadow-sm hover:bg-brand-700 active:bg-brand-700"
             >
-              Open my passport
+              {isOk ? "Open my passport" : "Open my passport"}
             </Link>
             <Link
               href="/check-in"
@@ -132,10 +132,15 @@ function ResultCard({ result }: { result: CheckInResult }) {
           icon={<StampIcon />}
           title="Stamp collected!"
           lines={[
-            <strong key="a">{result.activityName}</strong>,
-            <span key="b" className="text-sm text-stone-600 dark:text-stone-400">
+            <p key="a" className="text-base font-semibold">
+              {result.activityName}
+            </p>,
+            <p key="b" className="text-sm opacity-80">
               {result.eventName}
-            </span>,
+            </p>,
+            <p key="c" className="text-xs opacity-70">
+              Returning to your passport…
+            </p>,
           ]}
         />
       );
@@ -146,13 +151,15 @@ function ResultCard({ result }: { result: CheckInResult }) {
           icon={<CheckIcon />}
           title="Already in your passport"
           lines={[
-            <strong key="a">{result.activityName}</strong>,
-            <span key="b" className="text-sm text-stone-600 dark:text-stone-400">
+            <p key="a" className="text-base font-semibold">
+              {result.activityName}
+            </p>,
+            <p key="b" className="text-sm opacity-80">
               {result.eventName}
-            </span>,
-            <span key="c" className="text-xs text-stone-500 dark:text-stone-400">
+            </p>,
+            <p key="c" className="text-xs opacity-70">
               First stamped {result.stampedAt.toLocaleString()}
-            </span>,
+            </p>,
           ]}
         />
       );
@@ -163,9 +170,9 @@ function ResultCard({ result }: { result: CheckInResult }) {
           icon={<WarnIcon />}
           title="That stop isn't available"
           lines={[
-            <span key="a" className="text-sm">
+            <p key="a" className="text-sm">
               This activity (or its event) has been deactivated.
-            </span>,
+            </p>,
           ]}
         />
       );
@@ -176,10 +183,10 @@ function ResultCard({ result }: { result: CheckInResult }) {
           icon={<WarnIcon />}
           title="We couldn't find that QR"
           lines={[
-            <span key="a" className="text-sm">
+            <p key="a" className="text-sm">
               The link may have been regenerated. Ask the kiosk for the
               current QR or fallback code.
-            </span>,
+            </p>,
           ]}
         />
       );
@@ -213,7 +220,13 @@ function Card({
         {icon}
       </div>
       <h1 className="mt-3 text-xl font-semibold tracking-tight">{title}</h1>
-      <div className="mt-2 space-y-1">{lines}</div>
+      <div className="mt-3 flex flex-col items-center gap-1.5">
+        {lines.map((line, i) => (
+          <div key={`line-${i}`} className="w-full">
+            {line}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

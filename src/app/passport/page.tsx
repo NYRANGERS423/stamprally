@@ -254,36 +254,35 @@ export default async function PassportPage({
               Stamps · {stamps.length}
             </p>
           </div>
-          <div className="space-y-5 p-5">
+          <div className="space-y-7 p-5">
             {eventGroups.length === 0 ? (
-              <p className="py-4 text-center text-sm text-stone-600 dark:text-stone-400">
+              <p className="py-8 text-center text-sm text-stone-600 dark:text-stone-400">
                 No stamps yet. Tap &ldquo;Stamp new place&rdquo; at any event
                 to collect your first.
               </p>
             ) : (
               eventGroups.map(([eId, group]) => (
                 <div key={eId}>
-                  <h3 className={theme.labelClass}>
-                    {group.eventName}
-                  </h3>
-                  <ul className="mt-2 flex flex-wrap gap-2">
+                  <div className="mb-3 flex items-end justify-between border-b border-dashed border-current/20 pb-2">
+                    <h3 className={theme.labelClass}>{group.eventName}</h3>
+                    <span className={`${theme.labelClass} text-[9px]`}>
+                      {group.stamps.length} stamp
+                      {group.stamps.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <ul className="flex flex-wrap items-center justify-around gap-4 sm:gap-6">
                     {group.stamps.map((s) => {
                       const isNew = stamped === s.activity.name;
                       return (
-                        <li
-                          key={s.id}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs ${theme.stampChipClass} ${isNew ? theme.stampLandClass : ""}`}
-                        >
-                          <ThemeStampIcon path={theme.stampSvgPath} />
-                          <span className={`font-semibold ${theme.stampChipTextClass}`}>
-                            {s.activity.name}
-                          </span>
-                          <span className="text-stone-500 dark:text-stone-400">
-                            {s.stampedAt.toLocaleDateString(undefined, {
-                              month: "short",
-                              day: "numeric",
-                            })}
-                          </span>
+                        <li key={s.id}>
+                          <StampImpression
+                            activityName={s.activity.name}
+                            stampedAt={s.stampedAt}
+                            iconPath={theme.stampSvgPath}
+                            chipClass={theme.stampChipClass}
+                            textClass={theme.stampChipTextClass}
+                            landingClass={isNew ? theme.stampLandClass : ""}
+                          />
                         </li>
                       );
                     })}
@@ -353,22 +352,74 @@ function StampNewIcon() {
   );
 }
 
-function ThemeStampIcon({ path }: { path: string }) {
+// Hash a stamp id to a stable rotation in [-7, 7] degrees so each stamp on
+// the page sits at a slightly different angle, like real passport stamps.
+function rotationFromId(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) {
+    h = (h * 31 + id.charCodeAt(i)) | 0;
+  }
+  return ((Math.abs(h) % 15) - 7);
+}
+
+function StampImpression({
+  activityName,
+  stampedAt,
+  iconPath,
+  chipClass,
+  textClass,
+  landingClass,
+}: {
+  activityName: string;
+  stampedAt: Date;
+  iconPath: string;
+  chipClass: string;
+  textClass: string;
+  landingClass: string;
+}) {
+  const month = stampedAt
+    .toLocaleDateString(undefined, { month: "short" })
+    .toUpperCase();
+  const day = stampedAt.getDate();
+  const year = stampedAt.getFullYear() % 100;
+  const rot = rotationFromId(activityName + stampedAt.toISOString());
   return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="text-stamp-600"
-      aria-hidden="true"
+    <div
+      className={`relative h-24 w-24 sm:h-28 sm:w-28 ${landingClass}`}
+      style={{ transform: `rotate(${rot}deg)` }}
     >
-      <path d={path} />
-    </svg>
+      <div
+        className={`absolute inset-0 flex flex-col items-center justify-center rounded-full ${chipClass}`}
+      >
+        <span
+          aria-hidden
+          className={`absolute inset-1.5 rounded-full border border-dashed ${textClass} opacity-40`}
+        />
+        <div className={`relative flex flex-col items-center px-2 ${textClass}`}>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d={iconPath} />
+          </svg>
+          <p className="mt-0.5 line-clamp-2 text-center text-[9px] font-bold uppercase leading-tight tracking-wide">
+            {activityName}
+          </p>
+          <p className="mt-0.5 font-mono text-[10px] font-bold leading-none">
+            {month}
+          </p>
+          <p className="font-mono text-base font-black leading-none">{day}</p>
+          <p className="mt-0.5 font-mono text-[8px] opacity-70">&apos;{year}</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
