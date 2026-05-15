@@ -1,46 +1,21 @@
-# Production stack — single self-contained app image.
-# Migrations are applied by the app's startup entrypoint, so there is no
-# separate `migrate` service.
-#
+# Production stack — single combined container (Postgres + Stamprally).
 # Data lives in bind mounts under ${DATA_DIR} so it's visible from the host
-# (and easy to back up). Defaults to ./data for local prod-like testing;
-# on Unraid, set DATA_DIR=/mnt/user/appdata/stamprally in .env.
+# and easy to back up.
 services:
-  db:
-    image: postgres:16-alpine
+  app:
+    image: ${APP_IMAGE:-ghcr.io/nyrangers423/stamprally:latest}
+    pull_policy: ${PULL_POLICY:-missing}
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-stamprally}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required in production}
       POSTGRES_DB: ${POSTGRES_DB:-stamprally}
-      # Storing the data in a subdir lets the bind-mount root contain anything
-      # without confusing the Postgres init check.
-      PGDATA: /var/lib/postgresql/data/pgdata
-    volumes:
-      - ${DATA_DIR:-./data}/db:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-stamprally}"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
-  app:
-    # Pull a published image from GHCR by default. Override to `build: .`
-    # for a local build (e.g. when iterating on the Dockerfile).
-    image: ${APP_IMAGE:-ghcr.io/nyrangers423/stamprally:latest}
-    pull_policy: ${PULL_POLICY:-missing}
-    restart: unless-stopped
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-stamprally}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-stamprally}
       ADMIN_USERNAME: ${ADMIN_USERNAME:?ADMIN_USERNAME is required}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
       APP_URL: ${APP_URL:?APP_URL is required}
-    depends_on:
-      db:
-        condition: service_healthy
     ports:
       - "${APP_PORT:-3000}:3000"
     volumes:
+      - ${DATA_DIR:-./data}/db:/var/lib/postgresql/data
       - ${DATA_DIR:-./data}/uploads:/app/uploads
