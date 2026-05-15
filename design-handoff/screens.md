@@ -4,6 +4,8 @@ Eight screenshots cover the design surface. Don't try to capture all 30+ routes 
 
 Capture on a **mobile viewport** (e.g. 390×844 — a stock iPhone size). The app is mobile-first; mobile shots are more representative than desktop.
 
+**Save them in [`screenshots/`](screenshots/)** using the naming convention `<number>-<screen>-<theme/mode>.png` (e.g. `1-landing-light.png`). See [`screenshots/README.md`](screenshots/README.md) for the full file list.
+
 ## The eight
 
 - [ ] **1. Landing — `/`** *(light + dark)*

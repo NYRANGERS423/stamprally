@@ -16,6 +16,7 @@ This handoff is a snapshot of v1.0.0 (commit [`46d5829`](https://github.com/NYRA
 | [`ROUTES.md`](ROUTES.md) | Every page in the app, its audience, and what data it shows |
 | [`COMPONENTS.md`](COMPONENTS.md) | Shared components, their props, and where they appear |
 | [`screens.md`](screens.md) | Checklist of which screens to capture for review (6–8 shots, not 30) |
+| [`screenshots/`](screenshots/) | Drop captured PNGs here — naming convention in the folder's README |
 | [`globals.css`](globals.css) | Tailwind v4 token file — all design tokens live here |
 
 ## Stack at a glance
