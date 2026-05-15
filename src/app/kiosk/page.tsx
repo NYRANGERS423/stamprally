@@ -15,11 +15,24 @@ export default async function KioskHome() {
     <>
       <KioskTopBar username={username} />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Pick an event</h1>
-        <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
-          Only active events are shown. An admin can flip one back on if it&apos;s
-          missing.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Pick an event
+            </h1>
+            <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+              Only active events are shown. An admin can flip one back on if
+              it&apos;s missing.
+            </p>
+          </div>
+          <Link
+            href="/kiosk/give-accolade"
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-5 text-sm font-semibold text-amber-900 shadow-sm transition-colors hover:bg-amber-100 active:bg-amber-200 dark:border-amber-700 dark:bg-amber-950/60 dark:text-amber-100 dark:hover:bg-amber-900/60"
+          >
+            <span aria-hidden>★</span>
+            Give accolade
+          </Link>
+        </div>
 
         {events.length === 0 ? (
           <p className="mt-8 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">

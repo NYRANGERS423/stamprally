@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { getUserSession } from "@/lib/auth/session";
 import { displayTagLabel } from "@/lib/passport-tags";
 import { parseSignature } from "@/lib/signature";
+import { MyIdSheet } from "@/components/passport/MyIdSheet";
 import { SignatureRender } from "@/components/passport/SignatureRender";
 import { StampedFlash } from "@/components/passport/StampedFlash";
 import { UserHeader } from "@/components/user/UserHeader";
@@ -225,11 +226,15 @@ export default async function PassportPage({
           <Stat label="Accolades" value={totalAccolades} />
         </section>
 
-        {totalAccolades > 0 && (
-          <section className="mt-4 overflow-hidden rounded-2xl border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900">
-            <div className="border-b border-stone-200 px-4 py-3 dark:border-stone-800">
-              <h2 className="text-sm font-medium">Accolades</h2>
-            </div>
+        <section className="mt-4 overflow-hidden rounded-2xl border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900">
+          <div className="flex items-center justify-between gap-3 border-b border-stone-200 px-4 py-3 dark:border-stone-800">
+            <h2 className="text-sm font-medium">Accolades</h2>
+            <MyIdSheet
+              userId={user.id}
+              name={`${user.firstName} ${user.lastName}`}
+            />
+          </div>
+          {totalAccolades > 0 ? (
             <ul className="flex flex-wrap gap-2 p-4">
               {manualAccolades.map((a) => {
                 const accTheme =
@@ -258,8 +263,12 @@ export default async function PassportPage({
                 </li>
               ))}
             </ul>
-          </section>
-        )}
+          ) : (
+            <p className="px-4 py-6 text-center text-xs text-stone-500 dark:text-stone-400">
+              No accolades yet. Show your ID at a kiosk to receive one.
+            </p>
+          )}
+        </section>
 
         <section className={`relative mt-6 overflow-hidden rounded-2xl ${theme.stampsCardClass}`}>
           <div
