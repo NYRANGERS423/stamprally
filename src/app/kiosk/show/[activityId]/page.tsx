@@ -22,16 +22,10 @@ export default async function KioskShow({
   const activity = await db.activity.findUnique({
     where: { id: activityId },
     include: {
-      destination: {
-        select: {
-          id: true,
-          name: true,
-          event: { select: { id: true, name: true, active: true } },
-        },
-      },
+      event: { select: { id: true, name: true, active: true } },
     },
   });
-  if (!activity || !activity.active || !activity.destination.event.active) {
+  if (!activity || !activity.active || !activity.event.active) {
     notFound();
   }
 
@@ -42,7 +36,7 @@ export default async function KioskShow({
     width: 720,
     color: { dark: "#1e3a8a", light: "#ffffff" },
   });
-  const backHref = `/kiosk/${activity.destination.event.id}/${activity.destination.id}`;
+  const backHref = `/kiosk/${activity.event.id}`;
 
   return (
     <>
@@ -57,7 +51,7 @@ export default async function KioskShow({
           </Link>
           <div className="text-right">
             <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-stone-500 dark:text-stone-400">
-              {activity.destination.event.name} · {activity.destination.name}
+              {activity.event.name}
             </p>
           </div>
         </div>

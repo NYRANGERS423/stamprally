@@ -11,7 +11,7 @@ export default function LandingPage() {
           Collect stamps at company events.
         </h1>
         <p className="mt-4 text-stone-600 dark:text-stone-400">
-          Sign up, build your passport, and visit destinations to earn stamps.
+          Sign up, build your passport, and visit activities to earn stamps.
           A little fun for the workplace.
         </p>
 

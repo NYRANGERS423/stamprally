@@ -25,23 +25,16 @@ export default async function EventDetailPage({
   const event = await db.event.findUnique({
     where: { slug },
     include: {
-      destinations: {
+      activities: {
+        where: { active: true },
         orderBy: [{ order: "asc" }, { createdAt: "asc" }],
-        include: {
-          activities: {
-            where: { active: true },
-            orderBy: { createdAt: "asc" },
-            select: { id: true, name: true },
-          },
-        },
+        select: { id: true, name: true },
       },
     },
   });
   if (!event || !event.active) notFound();
 
-  const allActivityIds = event.destinations.flatMap((d) =>
-    d.activities.map((a) => a.id),
-  );
+  const allActivityIds = event.activities.map((a) => a.id);
 
   const [myStamps, leaderboardRaw] = await Promise.all([
     db.stamp.findMany({
@@ -131,42 +124,25 @@ export default async function EventDetailPage({
               }}
             />
           </div>
-          <div className="mt-5 space-y-3">
-            {event.destinations.map((d) => {
-              const stamped = d.activities.filter((a) =>
-                myStampedActivityIds.has(a.id),
-              ).length;
+          <ul className="mt-5 flex flex-wrap gap-1.5">
+            {event.activities.map((a) => {
+              const done = myStampedActivityIds.has(a.id);
               return (
-                <div key={d.id}>
-                  <p className="text-xs font-medium text-stone-700 dark:text-stone-300">
-                    {d.name}{" "}
-                    <span className="font-mono text-stone-400">
-                      ({stamped}/{d.activities.length})
-                    </span>
-                  </p>
-                  <ul className="mt-1 flex flex-wrap gap-1.5">
-                    {d.activities.map((a) => {
-                      const done = myStampedActivityIds.has(a.id);
-                      return (
-                        <li
-                          key={a.id}
-                          className={
-                            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs " +
-                            (done
-                              ? "border-stamp-600 bg-stamp-50 text-stamp-700 dark:border-stamp-500 dark:bg-stamp-600/20 dark:text-stamp-500"
-                              : "border-stone-300 text-stone-500 dark:border-stone-700 dark:text-stone-400")
-                          }
-                        >
-                          {done ? <CheckDot /> : <EmptyDot />}
-                          {a.name}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
+                <li
+                  key={a.id}
+                  className={
+                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs " +
+                    (done
+                      ? "border-stamp-600 bg-stamp-50 text-stamp-700 dark:border-stamp-500 dark:bg-stamp-600/20 dark:text-stamp-500"
+                      : "border-stone-300 text-stone-500 dark:border-stone-700 dark:text-stone-400")
+                  }
+                >
+                  {done ? <CheckDot /> : <EmptyDot />}
+                  {a.name}
+                </li>
               );
             })}
-          </div>
+          </ul>
         </section>
 
         <section className="rounded-xl border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900">

@@ -24,7 +24,7 @@ interface EventRow {
   startDate: Date | null;
   endDate: Date | null;
   active: boolean;
-  _count: { destinations: number };
+  _count: { activities: number };
 }
 
 const initial: EventFormState = {};
@@ -38,7 +38,7 @@ export function EventsPanel({ events }: { events: EventRow[] }) {
         <h1 className="text-2xl font-semibold tracking-tight">Events</h1>
         <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
           Top-level containers (e.g. &lsquo;Earth Day 2026&rsquo;). Each event
-          holds destinations, which hold the activities users stamp.
+          holds the activities users stamp.
         </p>
       </div>
 
@@ -132,7 +132,7 @@ function EventRowItem({ ev }: { ev: EventRow }) {
         <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-500 dark:text-stone-400">
           <span className="font-mono">{ev.slug}</span>
           {dates && <span>{dates}</span>}
-          <span>{ev._count.destinations} destinations</span>
+          <span>{ev._count.activities} activities</span>
           {!ev.active && (
             <span className="font-medium text-red-600 dark:text-red-400">
               Inactive

@@ -36,14 +36,10 @@ export async function stampByCodeAction(
     select: {
       qrToken: true,
       active: true,
-      destination: { select: { event: { select: { active: true } } } },
+      event: { select: { active: true } },
     },
   });
-  if (
-    !activity ||
-    !activity.active ||
-    !activity.destination.event.active
-  ) {
+  if (!activity || !activity.active || !activity.event.active) {
     return { error: "That code doesn't match any active activity" };
   }
   revalidatePath("/passport");

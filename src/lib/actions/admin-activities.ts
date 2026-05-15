@@ -20,15 +20,20 @@ const baseFields = z.object({
     .optional()
     .or(z.literal(""))
     .transform((v) => (v ? v : null)),
+  order: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => (v ? Number.parseInt(v, 10) : 0))
+    .refine((n) => Number.isFinite(n), { message: "Order must be a number" }),
 });
 
-function revalidate(eventId: string, destId: string) {
-  revalidatePath(`/admin/events/${eventId}/destinations/${destId}`);
+function revalidate(eventId: string) {
+  revalidatePath(`/admin/events/${eventId}`);
 }
 
 export async function createActivityAction(
   eventId: string,
-  destId: string,
   _prev: ActivityFormState,
   formData: FormData,
 ): Promise<ActivityFormState> {
@@ -41,20 +46,20 @@ export async function createActivityAction(
   const fallbackCode = await generateUniqueFallbackCode();
   await db.activity.create({
     data: {
-      destinationId: destId,
+      eventId,
       name: parsed.data.name,
       description: parsed.data.description,
+      order: parsed.data.order,
       qrToken,
       fallbackCode,
     },
   });
-  revalidate(eventId, destId);
+  revalidate(eventId);
   return { ok: true };
 }
 
 export async function updateActivityAction(
   eventId: string,
-  destId: string,
   activityId: string,
   _prev: ActivityFormState,
   formData: FormData,
@@ -69,15 +74,15 @@ export async function updateActivityAction(
     data: {
       name: parsed.data.name,
       description: parsed.data.description,
+      order: parsed.data.order,
     },
   });
-  revalidate(eventId, destId);
+  revalidate(eventId);
   return { ok: true };
 }
 
 export async function toggleActivityActiveAction(
   eventId: string,
-  destId: string,
   activityId: string,
   active: boolean,
 ): Promise<void> {
@@ -86,12 +91,11 @@ export async function toggleActivityActiveAction(
     where: { id: activityId },
     data: { active },
   });
-  revalidate(eventId, destId);
+  revalidate(eventId);
 }
 
 export async function regenerateActivityCodesAction(
   eventId: string,
-  destId: string,
   activityId: string,
 ): Promise<void> {
   await requireAdmin();
@@ -101,15 +105,14 @@ export async function regenerateActivityCodesAction(
     where: { id: activityId },
     data: { qrToken, fallbackCode },
   });
-  revalidate(eventId, destId);
+  revalidate(eventId);
 }
 
 export async function deleteActivityAction(
   eventId: string,
-  destId: string,
   activityId: string,
 ): Promise<void> {
   await requireAdmin();
   await db.activity.delete({ where: { id: activityId } });
-  revalidate(eventId, destId);
+  revalidate(eventId);
 }

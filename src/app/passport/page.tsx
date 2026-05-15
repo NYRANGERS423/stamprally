@@ -40,12 +40,7 @@ export default async function PassportPage() {
           select: {
             id: true,
             name: true,
-            destination: {
-              select: {
-                name: true,
-                event: { select: { id: true, name: true } },
-              },
-            },
+            event: { select: { id: true, name: true } },
           },
         },
       },
@@ -63,8 +58,8 @@ export default async function PassportPage() {
     { eventName: string; stamps: typeof stamps }
   >();
   for (const s of stamps) {
-    const eId = s.activity.destination.event.id;
-    const eName = s.activity.destination.event.name;
+    const eId = s.activity.event.id;
+    const eName = s.activity.event.name;
     if (!stampsByEvent.has(eId)) {
       stampsByEvent.set(eId, { eventName: eName, stamps: [] });
     }
@@ -247,7 +242,6 @@ export default async function PassportPage() {
                           {s.activity.name}
                         </span>
                         <span className="text-stone-500 dark:text-stone-400">
-                          {s.activity.destination.name} ·{" "}
                           {s.stampedAt.toLocaleDateString(undefined, {
                             month: "short",
                             day: "numeric",

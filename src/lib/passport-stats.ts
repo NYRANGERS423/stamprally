@@ -38,11 +38,7 @@ export async function computePersonalStats(
       activityId: true,
       activity: {
         select: {
-          destination: {
-            select: {
-              event: { select: { id: true, name: true, slug: true } },
-            },
-          },
+          event: { select: { id: true, name: true, slug: true } },
         },
       },
     },
@@ -53,7 +49,7 @@ export async function computePersonalStats(
     { eventId: string; eventName: string; eventSlug: string; stamped: number }
   >();
   for (const s of stamps) {
-    const ev = s.activity.destination.event;
+    const ev = s.activity.event;
     const cur = eventMap.get(ev.id);
     if (cur) cur.stamped += 1;
     else
@@ -66,30 +62,15 @@ export async function computePersonalStats(
   }
 
   const eventIds = Array.from(eventMap.keys());
-  let activeTotalByEvent = new Map<string, number>();
+  const activeTotalByEvent = new Map<string, number>();
   if (eventIds.length > 0) {
     const rows = await db.activity.groupBy({
-      by: ["destinationId"],
-      where: {
-        active: true,
-        destination: { eventId: { in: eventIds } },
-      },
+      by: ["eventId"],
+      where: { active: true, eventId: { in: eventIds } },
       _count: { _all: true },
     });
-    // Need eventId per destination — fetch lookup
-    const destinations = await db.destination.findMany({
-      where: { id: { in: rows.map((r) => r.destinationId) } },
-      select: { id: true, eventId: true },
-    });
-    const destToEvent = new Map(destinations.map((d) => [d.id, d.eventId]));
-    activeTotalByEvent = new Map<string, number>();
     for (const r of rows) {
-      const eId = destToEvent.get(r.destinationId);
-      if (!eId) continue;
-      activeTotalByEvent.set(
-        eId,
-        (activeTotalByEvent.get(eId) ?? 0) + r._count._all,
-      );
+      activeTotalByEvent.set(r.eventId, r._count._all);
     }
   }
 
@@ -120,11 +101,7 @@ export async function computeAutoAccolades(
           id: true,
           name: true,
           active: true,
-          destination: {
-            select: {
-              event: { select: { id: true, name: true, active: true } },
-            },
-          },
+          event: { select: { id: true, name: true, active: true } },
         },
       },
     },
@@ -141,7 +118,7 @@ export async function computeAutoAccolades(
 
   // Marathoner — ≥3 distinct events stamped at
   const stampedEventIds = new Set(
-    userStamps.map((s) => s.activity.destination.event.id),
+    userStamps.map((s) => s.activity.event.id),
   );
   const marathoner = stampedEventIds.size >= MARATHONER_THRESHOLD;
 
@@ -149,19 +126,15 @@ export async function computeAutoAccolades(
   const globetrotterEventNames: string[] = [];
   for (const eId of stampedEventIds) {
     const event = userStamps.find(
-      (s) => s.activity.destination.event.id === eId,
-    )!.activity.destination.event;
+      (s) => s.activity.event.id === eId,
+    )!.activity.event;
     if (!event.active) continue;
     const activeActivitiesInEvent = await db.activity.count({
-      where: {
-        active: true,
-        destination: { eventId: eId },
-      },
+      where: { active: true, eventId: eId },
     });
     if (activeActivitiesInEvent === 0) continue;
     const userStampedActiveInEvent = userStamps.filter(
-      (s) =>
-        s.activity.destination.event.id === eId && s.activity.active,
+      (s) => s.activity.event.id === eId && s.activity.active,
     ).length;
     if (userStampedActiveInEvent === activeActivitiesInEvent) {
       globetrotterEventNames.push(event.name);

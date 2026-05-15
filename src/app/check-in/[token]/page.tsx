@@ -7,12 +7,11 @@ import { getUserSession } from "@/lib/auth/session";
 import { UserHeader } from "@/components/user/UserHeader";
 
 type CheckInResult =
-  | { kind: "ok"; activityName: string; eventName: string; destName: string }
+  | { kind: "ok"; activityName: string; eventName: string }
   | {
       kind: "already";
       activityName: string;
       eventName: string;
-      destName: string;
       stampedAt: Date;
     }
   | { kind: "inactive" }
@@ -25,16 +24,11 @@ async function performCheckIn(
   const activity = await db.activity.findUnique({
     where: { qrToken: token },
     include: {
-      destination: {
-        select: {
-          name: true,
-          event: { select: { name: true, active: true } },
-        },
-      },
+      event: { select: { name: true, active: true } },
     },
   });
   if (!activity) return { kind: "not_found" };
-  if (!activity.active || !activity.destination.event.active) {
+  if (!activity.active || !activity.event.active) {
     return { kind: "inactive" };
   }
   const existing = await db.stamp.findUnique({
@@ -45,8 +39,7 @@ async function performCheckIn(
     return {
       kind: "already",
       activityName: activity.name,
-      eventName: activity.destination.event.name,
-      destName: activity.destination.name,
+      eventName: activity.event.name,
       stampedAt: existing.stampedAt,
     };
   }
@@ -58,11 +51,9 @@ async function performCheckIn(
     return {
       kind: "ok",
       activityName: activity.name,
-      eventName: activity.destination.event.name,
-      destName: activity.destination.name,
+      eventName: activity.event.name,
     };
   } catch (e) {
-    // Concurrent create — fall through to "already" state.
     if (
       e instanceof Prisma.PrismaClientKnownRequestError &&
       e.code === "P2002"
@@ -75,8 +66,7 @@ async function performCheckIn(
         return {
           kind: "already",
           activityName: activity.name,
-          eventName: activity.destination.event.name,
-          destName: activity.destination.name,
+          eventName: activity.event.name,
           stampedAt: after.stampedAt,
         };
       }
@@ -137,7 +127,7 @@ function ResultCard({ result }: { result: CheckInResult }) {
           lines={[
             <strong key="a">{result.activityName}</strong>,
             <span key="b" className="text-sm text-stone-600 dark:text-stone-400">
-              {result.eventName} · {result.destName}
+              {result.eventName}
             </span>,
           ]}
         />
@@ -151,7 +141,7 @@ function ResultCard({ result }: { result: CheckInResult }) {
           lines={[
             <strong key="a">{result.activityName}</strong>,
             <span key="b" className="text-sm text-stone-600 dark:text-stone-400">
-              {result.eventName} · {result.destName}
+              {result.eventName}
             </span>,
             <span key="c" className="text-xs text-stone-500 dark:text-stone-400">
               First stamped {result.stampedAt.toLocaleString()}

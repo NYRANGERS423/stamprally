@@ -9,10 +9,12 @@ import {
   type EventFormState,
 } from "@/lib/actions/admin-events";
 import {
-  createDestinationAction,
-  deleteDestinationAction,
-  type DestinationFormState,
-} from "@/lib/actions/admin-destinations";
+  createActivityAction,
+  deleteActivityAction,
+  regenerateActivityCodesAction,
+  toggleActivityActiveAction,
+  type ActivityFormState,
+} from "@/lib/actions/admin-activities";
 import {
   CARD,
   CARD_HEADER,
@@ -34,29 +36,32 @@ interface EventData {
   active: boolean;
 }
 
-interface DestinationData {
+interface ActivityData {
   id: string;
   name: string;
   description: string | null;
   order: number;
-  _count: { activities: number };
+  qrToken: string;
+  fallbackCode: string;
+  active: boolean;
+  _count: { stamps: number };
 }
 
 const initEvt: EventFormState = {};
-const initDest: DestinationFormState = {};
+const initAct: ActivityFormState = {};
 
 export function EventDetailPanel({
   event,
-  destinations,
+  activities,
 }: {
   event: EventData;
-  destinations: DestinationData[];
+  activities: ActivityData[];
 }) {
   const updateBound = updateEventAction.bind(null, event.id);
   const [eState, eAction, ePending] = useActionState(updateBound, initEvt);
 
-  const createDestBound = createDestinationAction.bind(null, event.id);
-  const [dState, dAction, dPending] = useActionState(createDestBound, initDest);
+  const createBound = createActivityAction.bind(null, event.id);
+  const [aState, aAction, aPending] = useActionState(createBound, initAct);
 
   const [togglePending, startToggle] = useTransition();
   const [deletePending, startDelete] = useTransition();
@@ -94,7 +99,7 @@ export function EventDetailPanel({
             onClick={() => {
               if (
                 !confirm(
-                  `Delete event "${event.name}"? This also removes its destinations, activities, and stamps. This cannot be undone.`,
+                  `Delete event "${event.name}"? This also removes its activities and stamps. This cannot be undone.`,
                 )
               )
                 return;
@@ -179,9 +184,9 @@ export function EventDetailPanel({
 
       <section className={CARD}>
         <div className={CARD_HEADER}>
-          <h2 className="text-sm font-medium">Add destination</h2>
+          <h2 className="text-sm font-medium">Add activity</h2>
         </div>
-        <form action={dAction} className="space-y-3 p-4">
+        <form action={aAction} className="space-y-3 p-4">
           <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
             <Field label="Name *">
               <input
@@ -189,14 +194,14 @@ export function EventDetailPanel({
                 required
                 maxLength={120}
                 className={INPUT_CLASS}
-                placeholder="Lobby"
+                placeholder="Coffee bar"
               />
             </Field>
-            <Field label="Display order" hint="Lower = earlier in the list">
+            <Field label="Display order" hint="Lower = earlier">
               <input
                 name="order"
                 type="number"
-                defaultValue={destinations.length}
+                defaultValue={activities.length}
                 className={INPUT_CLASS}
               />
             </Field>
@@ -207,22 +212,23 @@ export function EventDetailPanel({
                   rows={2}
                   maxLength={2000}
                   className={TEXTAREA_CLASS}
+                  placeholder="Short blurb shown on the kiosk screen"
                 />
               </Field>
             </div>
           </div>
-          {dState.error && (
+          {aState.error && (
             <p className="text-sm text-red-600 dark:text-red-400">
-              {dState.error}
+              {aState.error}
             </p>
           )}
-          {dState.ok && (
+          {aState.ok && (
             <p className="text-sm text-emerald-700 dark:text-emerald-400">
-              Destination added.
+              Activity added (QR + fallback code generated).
             </p>
           )}
-          <button type="submit" disabled={dPending} className={PRIMARY_BTN}>
-            {dPending ? "Adding…" : "Add destination"}
+          <button type="submit" disabled={aPending} className={PRIMARY_BTN}>
+            {aPending ? "Adding…" : "Add activity"}
           </button>
         </form>
       </section>
@@ -230,17 +236,17 @@ export function EventDetailPanel({
       <section className={CARD}>
         <div className={CARD_HEADER}>
           <h2 className="text-sm font-medium">
-            Destinations ({destinations.length})
+            Activities ({activities.length})
           </h2>
         </div>
-        {destinations.length === 0 ? (
+        {activities.length === 0 ? (
           <p className="px-4 py-6 text-sm text-stone-500 dark:text-stone-400">
-            No destinations yet.
+            No activities yet.
           </p>
         ) : (
           <ul className="divide-y divide-stone-200 dark:divide-stone-800">
-            {destinations.map((d) => (
-              <DestinationRow key={d.id} eventId={event.id} dest={d} />
+            {activities.map((a) => (
+              <ActivityRow key={a.id} eventId={event.id} activity={a} />
             ))}
           </ul>
         )}
@@ -249,53 +255,93 @@ export function EventDetailPanel({
   );
 }
 
-function DestinationRow({
+function ActivityRow({
   eventId,
-  dest,
+  activity,
 }: {
   eventId: string;
-  dest: DestinationData;
+  activity: ActivityData;
 }) {
   const [pending, start] = useTransition();
   return (
-    <li className="grid gap-3 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-center">
-      <div>
-        <Link
-          href={`/admin/events/${eventId}/destinations/${dest.id}`}
-          className="text-base font-medium hover:underline"
-        >
-          {dest.name}
-        </Link>
-        <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-500 dark:text-stone-400">
-          <span>Order {dest.order}</span>
-          <span>{dest._count.activities} activities</span>
+    <li className="space-y-2 px-4 py-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className={activity.active ? "" : "opacity-50"}>
+          <div className="text-base font-medium">{activity.name}</div>
+          {activity.description && (
+            <div className="mt-0.5 text-xs text-stone-600 dark:text-stone-400">
+              {activity.description}
+            </div>
+          )}
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-500 dark:text-stone-400">
+            <span>{activity._count.stamps} stamps</span>
+            <span>
+              Fallback code:{" "}
+              <span className="font-mono text-stone-900 dark:text-stone-100">
+                {activity.fallbackCode}
+              </span>
+            </span>
+            {!activity.active && (
+              <span className="font-medium text-red-600 dark:text-red-400">
+                Inactive
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <Link
-          href={`/admin/events/${eventId}/destinations/${dest.id}`}
-          className={SMALL_BTN}
-        >
-          Manage
-        </Link>
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => {
-            if (
-              !confirm(
-                `Delete destination "${dest.name}"? Its activities + stamps go with it. This cannot be undone.`,
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() =>
+              start(async () => {
+                await toggleActivityActiveAction(
+                  eventId,
+                  activity.id,
+                  !activity.active,
+                );
+              })
+            }
+            className={SMALL_BTN}
+          >
+            {activity.active ? "Deactivate" : "Reactivate"}
+          </button>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => {
+              if (
+                !confirm(
+                  `Regenerate QR + fallback code for "${activity.name}"? Previously-printed QR codes will stop working.`,
+                )
               )
-            )
-              return;
-            start(async () => {
-              await deleteDestinationAction(eventId, dest.id);
-            });
-          }}
-          className={DANGER_BTN}
-        >
-          Delete
-        </button>
+                return;
+              start(async () => {
+                await regenerateActivityCodesAction(eventId, activity.id);
+              });
+            }}
+            className={SMALL_BTN}
+          >
+            Regenerate codes
+          </button>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => {
+              if (
+                !confirm(
+                  `Delete activity "${activity.name}"? Its stamps go with it.`,
+                )
+              )
+                return;
+              start(async () => {
+                await deleteActivityAction(eventId, activity.id);
+              });
+            }}
+            className={DANGER_BTN}
+          >
+            Delete
+          </button>
+        </div>
       </div>
     </li>
   );
@@ -327,7 +373,6 @@ function Field({
 
 function dateOnly(d: Date | null): string {
   if (!d) return "";
-  // Convert to local YYYY-MM-DD for date input.
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");

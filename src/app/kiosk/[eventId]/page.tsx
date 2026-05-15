@@ -4,7 +4,7 @@ import { requireKiosk } from "@/lib/auth/kiosk-guard";
 import { db } from "@/lib/db";
 import { KioskTopBar } from "@/components/kiosk/KioskTopBar";
 
-export default async function KioskDestinations({
+export default async function KioskActivities({
   params,
 }: {
   params: Promise<{ eventId: string }>;
@@ -15,9 +15,9 @@ export default async function KioskDestinations({
   const event = await db.event.findUnique({
     where: { id: eventId },
     include: {
-      destinations: {
+      activities: {
+        where: { active: true },
         orderBy: [{ order: "asc" }, { createdAt: "asc" }],
-        include: { _count: { select: { activities: { where: { active: true } } } } },
       },
     },
   });
@@ -37,24 +37,29 @@ export default async function KioskDestinations({
           {event.name}
         </h1>
         <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
-          Pick a destination.
+          Pick an activity to display its QR code.
         </p>
 
-        {event.destinations.length === 0 ? (
+        {event.activities.length === 0 ? (
           <p className="mt-8 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-            This event has no destinations yet.
+            No active activities in this event.
           </p>
         ) : (
           <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-            {event.destinations.map((dest) => (
-              <li key={dest.id}>
+            {event.activities.map((a) => (
+              <li key={a.id}>
                 <Link
-                  href={`/kiosk/${eventId}/${dest.id}`}
+                  href={`/kiosk/show/${a.id}`}
                   className="block rounded-xl border border-stone-200 bg-white p-5 transition-colors hover:border-brand-500 hover:bg-brand-50 active:bg-brand-100 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-brand-500 dark:hover:bg-brand-900/30"
                 >
-                  <div className="text-lg font-semibold">{dest.name}</div>
-                  <div className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-                    {dest._count.activities} activities
+                  <div className="text-lg font-semibold">{a.name}</div>
+                  {a.description && (
+                    <div className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+                      {a.description}
+                    </div>
+                  )}
+                  <div className="mt-2 font-mono text-xs text-stone-500 dark:text-stone-400">
+                    Code: {a.fallbackCode}
                   </div>
                 </Link>
               </li>

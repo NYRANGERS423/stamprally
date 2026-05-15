@@ -12,10 +12,10 @@ export default async function EventDetailPage({
   const { eventId } = await params;
   const event = await db.event.findUnique({ where: { id: eventId } });
   if (!event) notFound();
-  const destinations = await db.destination.findMany({
+  const activities = await db.activity.findMany({
     where: { eventId },
-    orderBy: [{ order: "asc" }, { createdAt: "asc" }],
-    include: { _count: { select: { activities: true } } },
+    orderBy: [{ active: "desc" }, { order: "asc" }, { createdAt: "asc" }],
+    include: { _count: { select: { stamps: true } } },
   });
-  return <EventDetailPanel event={event} destinations={destinations} />;
+  return <EventDetailPanel event={event} activities={activities} />;
 }

@@ -10,40 +10,24 @@ export default async function EventsListPage() {
     where: { active: true },
     orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
     include: {
-      _count: { select: { destinations: true } },
-      destinations: {
-        select: {
-          _count: { select: { activities: { where: { active: true } } } },
-        },
-      },
+      activities: { where: { active: true }, select: { id: true } },
     },
   });
 
-  // For each event, get the user's stamp count (one query).
-  const myStampsByEvent = await db.stamp.groupBy({
-    by: ["activityId"],
-    where: { userId },
-    _count: { _all: true },
-  });
-  // Reduce per-activity counts into per-event counts.
-  const activityIds = myStampsByEvent.map((r) => r.activityId);
-  const activityRows = activityIds.length
-    ? await db.activity.findMany({
-        where: { id: { in: activityIds } },
-        select: {
-          id: true,
-          destination: { select: { eventId: true } },
-        },
+  const allActivityIds = events.flatMap((e) => e.activities.map((a) => a.id));
+  const myStamps = allActivityIds.length
+    ? await db.stamp.findMany({
+        where: { userId, activityId: { in: allActivityIds } },
+        select: { activityId: true },
       })
     : [];
-  const actToEvent = new Map(
-    activityRows.map((a) => [a.id, a.destination.eventId]),
-  );
+  const stampedActivityIds = new Set(myStamps.map((s) => s.activityId));
   const stampedPerEvent = new Map<string, number>();
-  for (const r of myStampsByEvent) {
-    const eId = actToEvent.get(r.activityId);
-    if (!eId) continue;
-    stampedPerEvent.set(eId, (stampedPerEvent.get(eId) ?? 0) + r._count._all);
+  for (const e of events) {
+    stampedPerEvent.set(
+      e.id,
+      e.activities.filter((a) => stampedActivityIds.has(a.id)).length,
+    );
   }
 
   return (
@@ -66,10 +50,7 @@ export default async function EventsListPage() {
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {events.map((e) => {
-              const totalActive = e.destinations.reduce(
-                (sum, d) => sum + d._count.activities,
-                0,
-              );
+              const totalActive = e.activities.length;
               const myCount = stampedPerEvent.get(e.id) ?? 0;
               return (
                 <li key={e.id}>
@@ -88,7 +69,6 @@ export default async function EventsListPage() {
                           })}
                         </span>
                       )}
-                      <span>{e._count.destinations} destinations</span>
                       <span className="font-medium text-brand-700 dark:text-brand-400">
                         {myCount} / {totalActive} stamps
                       </span>

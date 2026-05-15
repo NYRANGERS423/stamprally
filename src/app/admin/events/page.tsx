@@ -6,7 +6,7 @@ export default async function EventsAdminPage() {
   await requireAdmin();
   const events = await db.event.findMany({
     orderBy: [{ active: "desc" }, { startDate: "desc" }, { createdAt: "desc" }],
-    include: { _count: { select: { destinations: true } } },
+    include: { _count: { select: { activities: true } } },
   });
   return <EventsPanel events={events} />;
 }

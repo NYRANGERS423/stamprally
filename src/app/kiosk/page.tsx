@@ -8,7 +8,7 @@ export default async function KioskHome() {
   const events = await db.event.findMany({
     where: { active: true },
     orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
-    include: { _count: { select: { destinations: true } } },
+    include: { _count: { select: { activities: true } } },
   });
 
   return (
@@ -35,7 +35,7 @@ export default async function KioskHome() {
                 >
                   <div className="text-lg font-semibold">{event.name}</div>
                   <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-500 dark:text-stone-400">
-                    <span>{event._count.destinations} destinations</span>
+                    <span>{event._count.activities} activities</span>
                     {event.startDate && (
                       <span>
                         {event.startDate.toLocaleDateString(undefined, {
