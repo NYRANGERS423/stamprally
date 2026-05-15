@@ -5,11 +5,12 @@ import { db } from "@/lib/db";
 import { getUserSession } from "@/lib/auth/session";
 import { displayTagLabel } from "@/lib/passport-tags";
 import { parseSignature } from "@/lib/signature";
+import { AccoladeList } from "@/components/passport/AccoladeList";
 import { MyIdSheet } from "@/components/passport/MyIdSheet";
 import { SignatureRender } from "@/components/passport/SignatureRender";
 import { StampedFlash } from "@/components/passport/StampedFlash";
 import { UserHeader } from "@/components/user/UserHeader";
-import { getTheme, THEMES } from "@/lib/themes";
+import { getTheme } from "@/lib/themes";
 import {
   computePersonalStats,
   loadManualAccolades,
@@ -231,24 +232,10 @@ export default async function PassportPage({
             />
           </div>
           {totalAccolades > 0 ? (
-            <ul className="flex flex-wrap gap-2 p-4">
-              {manualAccolades.map((a) => {
-                const accTheme =
-                  a.themeId && a.themeId in THEMES
-                    ? THEMES[a.themeId as keyof typeof THEMES]
-                    : theme;
-                return (
-                  <li
-                    key={a.id}
-                    title={a.description ?? undefined}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${accTheme.tagChipClass}`}
-                  >
-                    {a.emoji && <span>{a.emoji}</span>}
-                    {a.label}
-                  </li>
-                );
-              })}
-            </ul>
+            <AccoladeList
+              accolades={manualAccolades}
+              defaultThemeId={user.theme}
+            />
           ) : (
             <p className="px-4 py-6 text-center text-xs text-stone-500 dark:text-stone-400">
               No accolades yet. Show your ID at a kiosk to receive one.

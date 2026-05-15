@@ -21,12 +21,16 @@ export interface ManualAccolade {
   emoji: string | null;
   themeId: string | null;
   eventId: string | null;
+  eventName: string | null;
+  points: number;
+  awardedBy: string;
+  awardedAt: Date;
 }
 
 export async function loadManualAccolades(
   userId: string,
 ): Promise<ManualAccolade[]> {
-  return db.accolade.findMany({
+  const rows = await db.accolade.findMany({
     where: { userId },
     orderBy: { awardedAt: "desc" },
     select: {
@@ -36,8 +40,24 @@ export async function loadManualAccolades(
       emoji: true,
       themeId: true,
       eventId: true,
+      points: true,
+      awardedBy: true,
+      awardedAt: true,
+      event: { select: { name: true } },
     },
   });
+  return rows.map((r) => ({
+    id: r.id,
+    label: r.label,
+    description: r.description,
+    emoji: r.emoji,
+    themeId: r.themeId,
+    eventId: r.eventId,
+    eventName: r.event?.name ?? null,
+    points: r.points,
+    awardedBy: r.awardedBy,
+    awardedAt: r.awardedAt,
+  }));
 }
 
 export async function computePersonalStats(
