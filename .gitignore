@@ -45,6 +45,7 @@ prisma/*.db-journal
 /CLAUDE.md
 /AGENTS.md
 /.claude/
+/WORKING.md
 CLAUDE.local.md
 *.local.md
 
