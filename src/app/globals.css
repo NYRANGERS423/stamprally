@@ -77,3 +77,20 @@ a {
     animation: none;
   }
 }
+
+/* ── Kiosk grant-accolade scanner flash ──────────────────────────────────── */
+@keyframes kiosk-flash {
+  0%   { opacity: 0; transform: scale(0.92); }
+  25%  { opacity: 1; transform: scale(1.02); }
+  80%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.animate-flash {
+  animation: kiosk-flash 1.8s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-flash {
+    animation: none;
+    opacity: 1;
+  }
+}

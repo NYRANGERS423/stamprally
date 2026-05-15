@@ -48,8 +48,8 @@ function PickTemplate({
         </Link>
       </div>
       <p className="text-sm text-stone-600 dark:text-stone-400">
-        Pick an accolade, then scan or enter each user&apos;s passport code to
-        hand it out.
+        Pick an accolade, then scan each user&apos;s passport QR. The camera
+        stays on between users so you can rapid-fire a whole group.
       </p>
       {templates.length === 0 ? (
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
@@ -102,6 +102,12 @@ function PickTemplate({
   );
 }
 
+type Flash =
+  | { kind: "success"; user: string }
+  | { kind: "duplicate"; user: string }
+  | { kind: "error"; message: string }
+  | null;
+
 function ScanAndGrant({
   template,
   onChange,
@@ -129,7 +135,11 @@ function ScanAndGrant({
     value: "",
     at: 0,
   });
+  const [grantCount, setGrantCount] = useState(0);
+  const [flash, setFlash] = useState<Flash>(null);
+  const lastNonceRef = useRef<number | undefined>(undefined);
 
+  // Probe camera support once on mount.
   useEffect(() => {
     QrScanner.hasCamera()
       .then((has) => setSupported(has))
@@ -170,12 +180,17 @@ function ScanAndGrant({
     setScanning(false);
   }
 
+  // Auto-start the camera as soon as we know it's supported, so the kiosk
+  // operator doesn't need to tap a button between users.
+  useEffect(() => {
+    if (supported === true && !scanning && !scannerRef.current) {
+      startScan();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supported]);
+
   function handleScan(raw: string) {
     if (!raw) return;
-    // Extract a user id or short code from the scanned text. Accept:
-    //   - raw cuid           (a-z0-9, ~24-25 chars)
-    //   - /u/<cuid> URL      (in case we ever encode QR as a URL)
-    //   - 6-char short code  (a-z0-9, last 6 of cuid)
     let value = raw.trim();
     const urlMatch = value.match(/\/u\/([a-z0-9]+)(?:[?#].*)?$/i);
     if (urlMatch) value = urlMatch[1];
@@ -183,8 +198,7 @@ function ScanAndGrant({
       setScanError("That QR doesn't look like a passport ID.");
       return;
     }
-    // Debounce identical reads within 2.5s to avoid double-grants from the
-    // scanner firing on every frame while a QR is in view.
+    // Debounce identical reads within 2.5s.
     const now = Date.now();
     if (
       lastScanRef.current.value === value &&
@@ -193,6 +207,7 @@ function ScanAndGrant({
       return;
     }
     lastScanRef.current = { value, at: now };
+    setScanError(null);
     submitCode(value);
   }
 
@@ -202,12 +217,39 @@ function ScanAndGrant({
     formRef.current.requestSubmit();
   }
 
-  // After each successful grant, clear the input so the next scan is fresh.
+  // Translate the most recent action result into a flash overlay, increment
+  // the session counter, fire haptics. Driven by state.nonce so repeat
+  // grants of the same code surface visually.
   useEffect(() => {
-    if (state.nonce && state.ok && codeInputRef.current) {
-      codeInputRef.current.value = "";
+    if (state.nonce === undefined || state.nonce === lastNonceRef.current) {
+      return;
     }
-  }, [state.nonce, state.ok]);
+    lastNonceRef.current = state.nonce;
+
+    if (state.ok && state.userName) {
+      if (state.alreadyHad) {
+        setFlash({ kind: "duplicate", user: state.userName });
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          navigator.vibrate([30, 60, 30]);
+        }
+      } else {
+        setGrantCount((c) => c + 1);
+        setFlash({ kind: "success", user: state.userName });
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          navigator.vibrate(60);
+        }
+      }
+    } else if (state.error) {
+      setFlash({ kind: "error", message: state.error });
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate([80, 40, 80]);
+      }
+    }
+
+    if (codeInputRef.current) codeInputRef.current.value = "";
+    const t = setTimeout(() => setFlash(null), 1800);
+    return () => clearTimeout(t);
+  }, [state.nonce, state.ok, state.alreadyHad, state.error, state.userName]);
 
   return (
     <div className="space-y-4">
@@ -243,6 +285,14 @@ function ScanAndGrant({
             {template.event?.name ?? "Standalone"}
           </p>
         </div>
+        <div className="shrink-0 text-right">
+          <p className="font-mono text-2xl font-bold leading-none">
+            {grantCount}
+          </p>
+          <p className="text-[10px] font-medium uppercase tracking-wider opacity-70">
+            granted
+          </p>
+        </div>
       </div>
 
       <form
@@ -253,7 +303,7 @@ function ScanAndGrant({
         <input type="hidden" name="templateId" value={template.id} />
 
         {supported !== false && (
-          <>
+          <div className="space-y-3">
             <div
               className={
                 "relative overflow-hidden rounded-lg border-2 border-dashed bg-stone-900 aspect-square " +
@@ -267,6 +317,40 @@ function ScanAndGrant({
                 playsInline
                 muted
               />
+              {flash && (
+                <div
+                  className={
+                    "pointer-events-none absolute inset-0 flex items-center justify-center text-center text-white animate-flash " +
+                    (flash.kind === "success"
+                      ? "bg-emerald-600/85"
+                      : flash.kind === "duplicate"
+                        ? "bg-amber-500/85"
+                        : "bg-red-600/85")
+                  }
+                >
+                  <div className="px-6">
+                    <p className="text-5xl">
+                      {flash.kind === "success"
+                        ? "✓"
+                        : flash.kind === "duplicate"
+                          ? "↺"
+                          : "✕"}
+                    </p>
+                    <p className="mt-2 text-base font-semibold">
+                      {flash.kind === "error"
+                        ? flash.message
+                        : flash.kind === "duplicate"
+                          ? `${flash.user} already had it`
+                          : `Granted to ${flash.user}`}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {pending && !flash && (
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-black/60 px-4 py-2 text-center text-xs font-medium text-white">
+                  Granting…
+                </div>
+              )}
             </div>
             {!scanning ? (
               <button
@@ -281,19 +365,19 @@ function ScanAndGrant({
               <button
                 type="button"
                 onClick={stopScan}
-                className="inline-flex h-11 w-full items-center justify-center rounded-md border border-stone-300 px-4 text-sm font-medium text-stone-700 hover:bg-stone-100 active:bg-stone-200 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
+                className="inline-flex h-10 w-full items-center justify-center rounded-md border border-stone-300 px-4 text-sm font-medium text-stone-700 hover:bg-stone-100 active:bg-stone-200 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
               >
-                Stop scanning
+                Pause camera
               </button>
             )}
             <div className="flex items-center gap-3">
               <span className="h-px flex-1 bg-stone-200 dark:bg-stone-800" />
               <span className="text-xs font-medium uppercase tracking-wider text-stone-500 dark:text-stone-400">
-                or
+                or type a code
               </span>
               <span className="h-px flex-1 bg-stone-200 dark:bg-stone-800" />
             </div>
-          </>
+          </div>
         )}
 
         <div>
@@ -315,7 +399,7 @@ function ScanAndGrant({
             className="mt-1 block h-14 w-full rounded-md border-2 border-stone-300 bg-white text-center font-mono text-2xl font-bold uppercase tracking-[0.3em] shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-stone-700 dark:bg-stone-900"
           />
           <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-            6-letter code on the user&apos;s passport.
+            6-character code on the user&apos;s passport.
           </p>
         </div>
 
