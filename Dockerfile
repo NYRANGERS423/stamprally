@@ -7,6 +7,8 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 # ── builder ───────────────────────────────────────────────────────────────────
+# This stage is ALSO used as the `migrate` service image in production
+# compose — it has the full Prisma CLI + transitive deps + schema/migrations.
 FROM node:24-alpine AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -31,7 +33,7 @@ COPY --from=builder --chown=app:app /app/public ./public
 COPY --from=builder --chown=app:app /app/.next/standalone ./
 COPY --from=builder --chown=app:app /app/.next/static ./.next/static
 
-# Prisma client + schema (for migrate deploy on startup if desired)
+# Prisma runtime client (CLI lives in the builder image, used by the migrate service)
 COPY --from=builder --chown=app:app /app/prisma ./prisma
 COPY --from=builder --chown=app:app /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=app:app /app/node_modules/@prisma ./node_modules/@prisma
