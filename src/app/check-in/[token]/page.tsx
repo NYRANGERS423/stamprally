@@ -90,6 +90,13 @@ export default async function CheckInByToken({
   }
 
   const result = await performCheckIn(session.userId, token);
+
+  // Seamless path: brand-new stamp → straight back to /passport with a flash.
+  // Non-happy paths (already / inactive / not_found) still show the card.
+  if (result.kind === "ok") {
+    redirect(`/passport?stamped=${encodeURIComponent(result.activityName)}`);
+  }
+
   return (
     <>
       <UserHeader active="stamp" />

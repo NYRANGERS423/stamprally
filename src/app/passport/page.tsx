@@ -6,6 +6,7 @@ import { getUserSession } from "@/lib/auth/session";
 import { displayTagLabel } from "@/lib/passport-tags";
 import { parseSignature } from "@/lib/signature";
 import { SignatureRender } from "@/components/passport/SignatureRender";
+import { StampedFlash } from "@/components/passport/StampedFlash";
 import { UserHeader } from "@/components/user/UserHeader";
 import { getTheme } from "@/lib/themes";
 import {
@@ -14,7 +15,12 @@ import {
   computePersonalStats,
 } from "@/lib/passport-stats";
 
-export default async function PassportPage() {
+export default async function PassportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ stamped?: string }>;
+}) {
+  const { stamped } = await searchParams;
   const session = await getUserSession();
   if (!session.userId) {
     redirect("/login");
@@ -80,6 +86,7 @@ export default async function PassportPage() {
   return (
     <>
       <UserHeader active="passport" />
+      {stamped && <StampedFlash activityName={stamped} />}
       <main className="flex flex-1 flex-col items-center px-4 py-6 sm:px-6 sm:py-10">
         <div className="w-full max-w-md">
         <div className={"overflow-hidden rounded-2xl " + theme.cardClass}>
