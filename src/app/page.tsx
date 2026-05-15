@@ -30,17 +30,45 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        <div className="mt-12 flex justify-center gap-6 text-xs">
+        <div className="mt-12 flex flex-wrap justify-center gap-3">
           <Link
             href="/admin/login"
-            className="text-stone-500 underline-offset-4 hover:text-stone-900 hover:underline dark:hover:text-stone-100"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-stone-200 bg-white px-4 text-xs font-medium text-stone-600 transition-colors hover:bg-stone-50 hover:text-stone-900 dark:border-stone-800 dark:bg-stone-950 dark:text-stone-400 dark:hover:bg-stone-900 dark:hover:text-stone-100"
           >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z" />
+            </svg>
             Admin sign-in
           </Link>
           <Link
             href="/kiosk/login"
-            className="text-stone-500 underline-offset-4 hover:text-stone-900 hover:underline dark:hover:text-stone-100"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-stone-200 bg-white px-4 text-xs font-medium text-stone-600 transition-colors hover:bg-stone-50 hover:text-stone-900 dark:border-stone-800 dark:bg-stone-950 dark:text-stone-400 dark:hover:bg-stone-900 dark:hover:text-stone-100"
           >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <rect x="4" y="3" width="16" height="14" rx="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
             Kiosk sign-in
           </Link>
         </div>

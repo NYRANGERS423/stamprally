@@ -92,11 +92,25 @@ export default async function EventDetailPage({
         <div>
           <Link
             href="/events"
-            className="inline-flex h-10 items-center rounded-md px-3 text-sm font-medium text-stone-600 hover:bg-stone-100 active:bg-stone-200 dark:text-stone-400 dark:hover:bg-stone-800"
+            className="inline-flex h-10 items-center gap-1.5 rounded-full border border-stone-300 bg-white px-4 text-sm font-medium text-stone-700 shadow-sm transition-colors hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
           >
-            ← All events
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            All events
           </Link>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight">
+          <h1 className="mt-3 text-2xl font-semibold tracking-tight">
             {event.name}
           </h1>
           {event.description && (

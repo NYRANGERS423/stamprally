@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export type FlashMode = "stamped" | "already" | "not_found" | "inactive";
@@ -129,45 +130,74 @@ export function StampedFlash({
   const [show, setShow] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setShow(false), 6000);
+    const ms = mode === "stamped" ? 10000 : 6000;
+    const t = setTimeout(() => setShow(false), ms);
     return () => clearTimeout(t);
-  }, []);
+  }, [mode]);
 
   if (!show) return null;
   const tone = TONES[mode];
+  const showStampAnother = mode === "stamped";
 
   return (
     <div className="pointer-events-none sticky top-14 z-20 mx-auto -mb-3 flex w-full max-w-md justify-center px-4">
       <div
-        className={`pointer-events-auto flex w-full items-center gap-3 rounded-full border-2 ${tone.ringClass} ${tone.bgClass} ${tone.textColorClass} px-4 py-2 text-sm font-medium shadow-lg`}
+        className={`pointer-events-auto w-full rounded-2xl border-2 ${tone.ringClass} ${tone.bgClass} ${tone.textColorClass} shadow-lg ${
+          showStampAnother ? "p-3" : "px-4 py-2"
+        }`}
       >
-        <span
-          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${tone.iconBgClass} ${tone.iconColorClass}`}
-        >
-          {tone.icon}
-        </span>
-        <span className="flex-1 truncate">
-          {MESSAGES[mode](activityName)}
-        </span>
-        <button
-          type="button"
-          onClick={() => setShow(false)}
-          aria-label="Dismiss"
-          className="-mr-1 inline-flex h-7 w-7 items-center justify-center rounded-full opacity-70 hover:bg-black/10 dark:hover:bg-white/10"
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
+        <div className="flex items-center gap-3 text-sm font-medium">
+          <span
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${tone.iconBgClass} ${tone.iconColorClass}`}
           >
-            <line x1="6" y1="6" x2="18" y2="18" />
-            <line x1="18" y1="6" x2="6" y2="18" />
-          </svg>
-        </button>
+            {tone.icon}
+          </span>
+          <span className="flex-1 truncate">
+            {MESSAGES[mode](activityName)}
+          </span>
+          <button
+            type="button"
+            onClick={() => setShow(false)}
+            aria-label="Dismiss"
+            className="-mr-1 inline-flex h-7 w-7 items-center justify-center rounded-full opacity-70 hover:bg-black/10 dark:hover:bg-white/10"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
+          </button>
+        </div>
+        {showStampAnother && (
+          <Link
+            href="/check-in"
+            onClick={() => setShow(false)}
+            className="mt-2 inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 active:bg-emerald-800 dark:bg-emerald-500 dark:hover:bg-emerald-400"
+          >
+            Stamp another
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </Link>
+        )}
       </div>
     </div>
   );
