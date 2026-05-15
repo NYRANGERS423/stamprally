@@ -7,6 +7,11 @@ import { logoutAction } from "@/lib/actions/user-auth";
 import { displayTagLabel } from "@/lib/passport-tags";
 import { parseSignature } from "@/lib/signature";
 import { SignatureRender } from "@/components/passport/SignatureRender";
+import {
+  accoladeChips,
+  computeAutoAccolades,
+  computePersonalStats,
+} from "@/lib/passport-stats";
 
 export default async function PassportPage() {
   const session = await getUserSession();
@@ -17,7 +22,7 @@ export default async function PassportPage() {
     redirect("/force-change-password");
   }
 
-  const [user, stamps] = await Promise.all([
+  const [user, stamps, stats, autoAccolades] = await Promise.all([
     db.user.findUnique({
       where: { id: session.userId },
       include: {
@@ -45,7 +50,10 @@ export default async function PassportPage() {
         },
       },
     }),
+    computePersonalStats(session.userId),
+    computeAutoAccolades(session.userId),
   ]);
+  const accolades = accoladeChips(autoAccolades);
   if (!user) {
     redirect("/login");
   }
@@ -196,6 +204,32 @@ export default async function PassportPage() {
           </Link>
         </div>
 
+        <section className="mt-6 grid grid-cols-3 gap-3 text-center">
+          <Stat label="Stamps" value={stats.totalStamps} />
+          <Stat label="Events" value={stats.eventsParticipated} />
+          <Stat label="Accolades" value={accolades.length} />
+        </section>
+
+        {accolades.length > 0 && (
+          <section className="mt-4 overflow-hidden rounded-2xl border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900">
+            <div className="border-b border-stone-200 px-4 py-3 dark:border-stone-800">
+              <h2 className="text-sm font-medium">Accolades</h2>
+            </div>
+            <ul className="flex flex-wrap gap-2 p-4">
+              {accolades.map((a, i) => (
+                <li
+                  key={`${a.kind}-${i}`}
+                  title={a.description}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-stamp-600/10 px-3 py-1.5 text-xs font-medium text-stamp-700 dark:bg-stamp-600/20 dark:text-stamp-500"
+                >
+                  <StarIcon />
+                  {a.label}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <section className="mt-6 overflow-hidden rounded-2xl border-2 border-brand-700 bg-amber-50/60 dark:border-brand-500 dark:bg-amber-950/20">
           <div className="border-b-2 border-dashed border-brand-700/60 px-6 py-3 dark:border-brand-500/60">
             <p className="text-center font-mono text-xs uppercase tracking-[0.4em] text-brand-900 dark:text-brand-300">
@@ -240,12 +274,18 @@ export default async function PassportPage() {
           </div>
         </section>
 
-        <div className="mt-6 flex justify-center gap-3 text-sm">
+        <div className="mt-6 flex flex-wrap justify-center gap-3 text-sm">
           <Link
             href="/passport/edit"
             className="inline-flex h-12 items-center justify-center rounded-full border border-stone-300 bg-white px-6 font-medium text-stone-900 shadow-sm transition-colors hover:bg-stone-100 active:bg-stone-200 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:hover:bg-stone-800"
           >
             Edit passport
+          </Link>
+          <Link
+            href="/events"
+            className="inline-flex h-12 items-center justify-center rounded-full border border-stone-300 bg-white px-6 font-medium text-stone-900 shadow-sm transition-colors hover:bg-stone-100 active:bg-stone-200 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:hover:bg-stone-800"
+          >
+            Browse events
           </Link>
         </div>
       </div>
@@ -305,6 +345,31 @@ function StampBadgeIcon() {
       aria-hidden="true"
     >
       <path d="M5 12l5 5L20 7" />
+    </svg>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg border border-stone-200 bg-white px-4 py-3 dark:border-stone-800 dark:bg-stone-900">
+      <p className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+        {label}
+      </p>
+      <p className="mt-1 text-2xl font-semibold">{value}</p>
+    </div>
+  );
+}
+
+function StarIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M12 2l2.39 6.95H22l-5.8 4.21L18.45 21 12 16.78 5.55 21l2.25-7.84L2 8.95h7.61L12 2z" />
     </svg>
   );
 }
