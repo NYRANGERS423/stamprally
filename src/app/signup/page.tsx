@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getUserSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { SignupForm } from "@/components/auth/SignupForm";
+import { AuthChooserFooter } from "@/components/auth/AuthChooserFooter";
 
 export default async function SignupPage() {
   const session = await getUserSession();
@@ -70,6 +71,7 @@ export default async function SignupPage() {
             Sign in
           </Link>
         </div>
+        <AuthChooserFooter current="user" />
       </div>
     </main>
   );

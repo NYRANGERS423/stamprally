@@ -23,7 +23,6 @@ export function CodeEntryForm() {
           inputMode="numeric"
           pattern="[0-9]*"
           autoComplete="one-time-code"
-          autoFocus
           required
           minLength={4}
           maxLength={8}

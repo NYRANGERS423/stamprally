@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUserSession } from "@/lib/auth/session";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { AuthChooserFooter } from "@/components/auth/AuthChooserFooter";
 
 export default async function LoginPage({
   searchParams,
@@ -34,6 +35,7 @@ export default async function LoginPage({
             Sign up
           </Link>
         </div>
+        <AuthChooserFooter current="user" />
       </div>
     </main>
   );

@@ -39,10 +39,10 @@ export function UserHeader({
         <nav className="flex items-center gap-1">
           {nav.map((item) => {
             const isActive =
-              (active === "passport" && item.href === "/passport") ||
+              ((active === "passport" || active === "edit") &&
+                item.href === "/passport") ||
               (active === "events" && item.href === "/events") ||
-              (active === "stamp" && item.href === "/check-in") ||
-              (active === "edit" && item.href === "/passport/edit");
+              (active === "stamp" && item.href === "/check-in");
             return (
               <Link
                 key={item.href}

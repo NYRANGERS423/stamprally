@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAdminSession } from "@/lib/auth/session";
 import { AdminLoginForm } from "@/components/admin/AdminLoginForm";
+import { AuthChooserFooter } from "@/components/auth/AuthChooserFooter";
 
 export default async function AdminLoginPage() {
   const session = await getAdminSession();
@@ -23,14 +23,7 @@ export default async function AdminLoginPage() {
           </p>
         </div>
         <AdminLoginForm />
-        <div className="flex justify-center">
-          <Link
-            href="/"
-            className="inline-flex h-11 items-center justify-center rounded-md px-4 text-sm font-medium text-stone-600 hover:bg-stone-100 active:bg-stone-200 dark:text-stone-400 dark:hover:bg-stone-800"
-          >
-            ← Back to home
-          </Link>
-        </div>
+        <AuthChooserFooter current="admin" />
       </div>
     </main>
   );

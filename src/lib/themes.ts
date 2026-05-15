@@ -50,7 +50,7 @@ const THEMES_LIST: Theme[] = [
     id: "default",
     label: "Classic Blue",
     description: "Crisp navy + cream — the standard issue look.",
-    emoji: "🗽",
+    emoji: "🇺🇸",
     pageBgClass: "",
     cardClass:
       "border-2 border-brand-700 bg-gradient-to-br from-brand-50 to-brand-100 shadow-lg dark:border-brand-500 dark:from-brand-900/40 dark:to-brand-900/10",
@@ -67,9 +67,9 @@ const THEMES_LIST: Theme[] = [
     photoBorderClass:
       "border-2 border-brand-700/40 bg-white dark:border-brand-500/40 dark:bg-stone-900",
     stampsCardClass:
-      "border-2 border-brand-700 bg-amber-50/60 dark:border-brand-500 dark:bg-amber-950/20",
+      "border-2 border-brand-700 bg-amber-50/60 dark:border-brand-500 dark:bg-stone-800",
     stampsHeaderClass:
-      "border-b-2 border-dashed border-brand-700/60 px-6 py-3 dark:border-brand-500/60",
+      "border-b-2 border-dashed border-brand-700/60 bg-amber-100/60 px-6 py-3 dark:border-brand-500/60 dark:bg-stone-900",
     stampsHeaderTextClass:
       "text-center font-mono text-xs uppercase tracking-[0.4em] text-brand-900 dark:text-brand-300",
     stampChipClass:
@@ -88,7 +88,7 @@ const THEMES_LIST: Theme[] = [
     bgPattern:
       "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><circle cx='10' cy='10' r='0.8' fill='%231e3a8a' opacity='0.18'/></svg>\")",
     stampsBgPattern:
-      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28'><path d='M14 4 L18 12 L26 14 L18 16 L14 24 L10 16 L2 14 L10 12 Z' fill='%23b45309' opacity='0.07'/></svg>\")",
+      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28'><path d='M14 4 L18 12 L26 14 L18 16 L14 24 L10 16 L2 14 L10 12 Z' fill='%23d97706' opacity='0.22'/></svg>\")",
     stampSvgPath: "M5 12l5 5L20 7",
     stampLandClass: "stamp-land-classic",
   },
