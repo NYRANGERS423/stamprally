@@ -124,7 +124,8 @@ Open `https://<your-domain>/admin/login` and sign in with `ADMIN_USERNAME` / `AD
 1. **Departments / Companies / Regions** — add at least one of each (signup dropdowns).
 2. **Access codes** — create a code (e.g. `LAUNCH-2026`) and share it with the first wave of users.
 3. **Kiosk users** — create at least one (e.g. `front-desk` + a strong password).
-4. **Events → Destinations → Activities** — set up your first event.
+4. **Events → Activities** — set up your first event and its activity stations (each gets its own QR + 4-digit fallback code).
+5. **Accolades** — seed `/admin/accolades` with a catalog of awards (see [docs/accolade-seed-suggestions.md](docs/accolade-seed-suggestions.md) for starter ideas).
 
 Users sign up at `/signup`. Kiosks sign in at `/kiosk/login` and pick an activity to display its QR.
 
@@ -182,7 +183,8 @@ Same combined image, same bind-mount layout — just a different way to wire it 
 | `/check-in`, `/check-in/[token]` | User | Type the 4-digit code or scan a QR |
 | `/events`, `/events/[slug]` | User | Event list + leaderboard + progress |
 | `/admin/login`, `/admin/...` | Admin | env-var creds. Events tree, kiosk users, access codes, dropdowns, settings |
-| `/kiosk/login`, `/kiosk/...` | Kiosk | Event/destination/activity picker + QR display |
+| `/kiosk/login`, `/kiosk/...` | Kiosk | Event/activity picker + QR display, plus a "Give accolade" flow for handing out awards by scanning a user's passport |
+| `/leaderboard` | User | Top stampers / accolade-earners / points-ranked, filterable by quarter or event |
 
 ---
 

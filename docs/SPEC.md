@@ -4,7 +4,7 @@
 
 ## Concept
 
-Internal "fake passport" web app where company employees create a profile (their "passport") and collect **stamps** by visiting **Activities** within **Destinations** at company **Events**. Designed to be configurable and scalable across multiple events and years.
+Internal "fake passport" web app where company employees create a profile (their "passport") and collect **stamps** by visiting **Activities** at company **Events**. Designed to be configurable and scalable across multiple events and years.
 
 ## Personas
 
@@ -15,10 +15,17 @@ Internal "fake passport" web app where company employees create a profile (their
 ## Domain model
 
 ```
-Event   1—*  Destination   1—*  Activity   1—*  Stamp  *—1  User
-                                                              *—*  PassportTag (free-form personal tags)
-                                                              *—1  Department / Company / Region
+Event   1—*  Activity   1—*  Stamp   *—1  User
+                                            *—*  PassportTag (free-form personal tags)
+                                            *—*  Accolade    (admin-granted award; snapshots a template)
+                                            *—1  Department / Company / Region
+
+AccoladeTemplate (catalog) ──[snapshot at grant]──>  Accolade
 ```
+
+Each Activity and AccoladeTemplate carries a `points` value (default 1) so
+stamps and accolades feed a points-based leaderboard alongside the
+count-based stamps and accolades boards.
 
 ## V1 features
 
@@ -58,8 +65,9 @@ Admin can override **all** fields on any profile.
 
 ### Events & activities (admin-managed)
 
-- CRUD: Event → Destination → Activity tree
+- CRUD: Event → Activity (flat — no intermediate Destination layer)
 - Each Activity has a unique long QR token + short fallback code (4 digits)
+- Each Activity has a `points` value (admin-editable, default 1) that feeds the points leaderboard
 - Activity can be active / inactive
 
 ### Check-in flow
@@ -71,31 +79,31 @@ Admin can override **all** fields on any profile.
 
 ### Kiosk UI
 
-- Logged-in kiosk picks: Event → Destination → Activity
-- Renders large QR + fallback code on screen
-- Stays on screen until kiosk picks a different activity
+- Logged-in kiosk picks: Event → Activity → renders large QR + fallback code on screen
+- "Give accolade" flow: kiosk picks an accolade from the catalog, then scans each user's passport QR (or types their 6-character code) to grant it. Rapid-fire scanner for handing accolades to a whole group quickly.
+- Stays on the chosen surface until the kiosk operator navigates elsewhere
 
-### Stats
+### Stats & leaderboards
 
-- **Personal**: stamps collected, events participated, current streaks
-- **Leaderboard**: per event and all-time
-- **Accolades** (auto-awarded):
-  - Fast Traveller — top N% by check-in speed within an event
-  - Globetrotter — visited every activity in an event
-  - Early Bird — first to check in at a given activity
-  - Marathoner — most events across a calendar year
-  - Completionist — 100% of activities across all events in a year
-- **Manual accolades**: admin can grant a custom badge to a person or team
+- **Personal** (on `/passport`): stamps collected, events participated, accolade count
+- **Per-event leaderboard** (on `/events/[slug]`): ranked by stamps within that event, with per-user accolade count shown alongside
+- **Overall leaderboard** (on `/leaderboard`): three boards behind a switcher
+  - **Points** (default) — sum of stamp.activity.points + accolade.points
+  - **Stamps** — most stamps collected
+  - **Accolades** — most accolades earned
+  Each board supports date filters (all time, this year, each quarter of the current and previous year) and an event filter
+- **Accolades**: all accolades are admin-managed — there is no auto-awarded layer. The `AccoladeTemplate` catalog at `/admin/accolades` defines the available accolades (label, emoji, theme, optional event tag, point value, active/inactive). Admins grant them per-user at `/admin/users/[id]`; kiosk operators grant them by scanning passport QRs at `/kiosk/give-accolade`. Granted accolades snapshot the template's fields so editing a template later does not retroactively rescore past grants.
 
 ### Admin panel
 
 - Users / passports: search, view, override any field, reset password
 - Signup access codes: CRUD
 - Dropdown lists: Departments, Companies, Regions (CRUD; soft-deactivate)
-- Events / Destinations / Activities: CRUD; generate QR + fallback code
+- Events / Activities: CRUD; generate QR + fallback code; activity points
+- Accolade catalog: CRUD on `AccoladeTemplate` rows (label, emoji, theme, event tag, points, active)
+- Per-user grant/revoke of accolades from `/admin/users/[id]`
 - Kiosk users: CRUD
 - Photo upload limits: edit at runtime
-- Manual accolades: grant / revoke
 - Audit log: view all admin actions
 
 ## Future / V2+
