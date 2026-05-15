@@ -19,9 +19,24 @@ import {
 export default async function PassportPage({
   searchParams,
 }: {
-  searchParams: Promise<{ stamped?: string }>;
+  searchParams: Promise<{
+    stamped?: string;
+    already?: string;
+    stampError?: string;
+  }>;
 }) {
-  const { stamped } = await searchParams;
+  const { stamped, already, stampError } = await searchParams;
+  const flashName = stamped ?? already;
+  const flashMode: import("@/components/passport/StampedFlash").FlashMode | null =
+    stamped
+      ? "stamped"
+      : already
+        ? "already"
+        : stampError === "not_found"
+          ? "not_found"
+          : stampError === "inactive"
+            ? "inactive"
+            : null;
   const session = await getUserSession();
   if (!session.userId) {
     redirect("/login");
@@ -89,7 +104,9 @@ export default async function PassportPage({
   return (
     <>
       <UserHeader active="passport" />
-      {stamped && <StampedFlash activityName={stamped} />}
+      {flashMode && (
+        <StampedFlash mode={flashMode} activityName={flashName} />
+      )}
       <main className="flex flex-1 flex-col items-center px-4 py-6 sm:px-6 sm:py-10">
         <div className="w-full max-w-md">
         <div className={"relative overflow-hidden rounded-2xl " + theme.cardClass}>
@@ -156,17 +173,15 @@ export default async function PassportPage({
             </div>
 
             {user.tags.length > 0 && (
-              <div className="mt-5 border-t border-dashed border-brand-700/30 pt-4 dark:border-brand-500/30">
-                <p className={theme.labelClass}>
-                  About me
-                </p>
+              <div className={`mt-5 border-t border-dashed pt-4 ${theme.dividerClass}`}>
+                <p className={theme.labelClass}>About me</p>
                 <ul className="mt-2 flex flex-wrap gap-1.5">
                   {user.tags.map((tag) => (
                     <li
                       key={tag.id}
-                      className="inline-flex items-center gap-1 rounded-full bg-brand-700/10 px-2.5 py-1 text-xs text-brand-900 dark:bg-brand-500/15 dark:text-brand-200"
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs ${theme.tagChipClass}`}
                     >
-                      <span className="text-brand-900/60 dark:text-brand-200/70">
+                      <span className={theme.tagChipKeyClass}>
                         {displayTagLabel(tag.key)}:
                       </span>
                       <span className="font-medium">{tag.value}</span>
@@ -177,13 +192,11 @@ export default async function PassportPage({
             )}
 
             {signature && (
-              <div className="mt-5 border-t border-dashed border-brand-700/30 pt-3 dark:border-brand-500/30">
-                <p className={theme.labelClass}>
-                  Signature
-                </p>
+              <div className={`mt-5 border-t border-dashed pt-3 ${theme.dividerClass}`}>
+                <p className={theme.labelClass}>Signature</p>
                 <SignatureRender
                   data={signature}
-                  className="mt-1 block h-14 w-full text-brand-900 dark:text-brand-200"
+                  className={`mt-1 block h-14 w-full ${theme.signatureColorClass}`}
                 />
               </div>
             )}
