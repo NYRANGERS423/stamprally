@@ -7,7 +7,9 @@ import { PhotoUploader } from "@/components/passport/PhotoUploader";
 import { ProfileForm } from "@/components/passport/ProfileForm";
 import { TagsEditor } from "@/components/passport/TagsEditor";
 import { SignatureCanvas } from "@/components/passport/SignatureCanvas";
+import { ThemeSelector } from "@/components/passport/ThemeSelector";
 import { UserHeader } from "@/components/user/UserHeader";
+import { type ThemeId } from "@/lib/themes";
 
 export default async function EditPassportPage() {
   const session = await getUserSession();
@@ -41,6 +43,10 @@ export default async function EditPassportPage() {
             Personalise your passport. Photo and most fields can be changed any time.
           </p>
         </div>
+
+        <Card title="Theme">
+          <ThemeSelector current={(user.theme ?? "default") as ThemeId} />
+        </Card>
 
         <Card title="Photo">
           <PhotoUploader

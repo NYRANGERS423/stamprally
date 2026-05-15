@@ -7,6 +7,7 @@ import { displayTagLabel } from "@/lib/passport-tags";
 import { parseSignature } from "@/lib/signature";
 import { SignatureRender } from "@/components/passport/SignatureRender";
 import { UserHeader } from "@/components/user/UserHeader";
+import { getTheme } from "@/lib/themes";
 import {
   accoladeChips,
   computeAutoAccolades,
@@ -74,21 +75,22 @@ export default async function PassportPage() {
   });
 
   const signature = parseSignature(user.signatureSvg);
+  const theme = getTheme(user.theme);
 
   return (
     <>
       <UserHeader active="passport" />
       <main className="flex flex-1 flex-col items-center px-4 py-6 sm:px-6 sm:py-10">
         <div className="w-full max-w-md">
-        <div className="overflow-hidden rounded-2xl border-2 border-brand-700 bg-gradient-to-br from-brand-50 to-brand-100 shadow-lg dark:border-brand-500 dark:from-brand-900/40 dark:to-brand-900/10">
-          <div className="border-b-2 border-dashed border-brand-700/60 px-6 py-3 dark:border-brand-500/60">
-            <p className="text-center font-mono text-xs uppercase tracking-[0.4em] text-brand-900 dark:text-brand-300">
-              Passport · Stamprally
+        <div className={"overflow-hidden rounded-2xl " + theme.cardClass}>
+          <div className={theme.headerStripClass}>
+            <p className={theme.headerTextClass}>
+              {theme.emoji} Passport · Stamprally
             </p>
           </div>
           <div className="p-6">
             <div className="flex gap-4">
-              <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-md border-2 border-brand-700/40 bg-white dark:border-brand-500/40 dark:bg-stone-900">
+              <div className={"relative h-28 w-28 shrink-0 overflow-hidden rounded-md " + theme.photoBorderClass}>
                 {user.photoPath ? (
                   <Image
                     src={`/api/uploads/${user.photoPath}`}
@@ -105,7 +107,7 @@ export default async function PassportPage() {
               </div>
               <div className="flex-1 space-y-2">
                 <div>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-brand-900/60 dark:text-brand-300/70">
+                  <p className={theme.labelClass}>
                     Surname / Name
                   </p>
                   <p className="text-lg font-semibold uppercase leading-tight tracking-wide">
@@ -117,29 +119,29 @@ export default async function PassportPage() {
             </div>
 
             <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3">
-              <Row label="Passport number">
+              <Row label="Passport number" labelClass={theme.labelClass}>
                 <span className="font-mono text-sm">
                   {user.passportNumber}
                 </span>
               </Row>
-              <Row label="Citizen since">{startedOn}</Row>
-              <Row label="Nationality">{user.department?.name ?? "—"}</Row>
-              <Row label="Place of issue">{user.region?.name ?? "—"}</Row>
+              <Row label="Citizen since" labelClass={theme.labelClass}>{startedOn}</Row>
+              <Row label="Nationality" labelClass={theme.labelClass}>{user.department?.name ?? "—"}</Row>
+              <Row label="Place of issue" labelClass={theme.labelClass}>{user.region?.name ?? "—"}</Row>
               <div className="col-span-2">
-                <Row label="Issuing authority">
+                <Row label="Issuing authority" labelClass={theme.labelClass}>
                   {user.company?.name ?? "—"}
                 </Row>
               </div>
               {user.occupation && (
                 <div className="col-span-2">
-                  <Row label="Occupation">{user.occupation}</Row>
+                  <Row label="Occupation" labelClass={theme.labelClass}>{user.occupation}</Row>
                 </div>
               )}
             </div>
 
             {user.tags.length > 0 && (
               <div className="mt-5 border-t border-dashed border-brand-700/30 pt-4 dark:border-brand-500/30">
-                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-brand-900/60 dark:text-brand-300/70">
+                <p className={theme.labelClass}>
                   About me
                 </p>
                 <ul className="mt-2 flex flex-wrap gap-1.5">
@@ -160,7 +162,7 @@ export default async function PassportPage() {
 
             {signature && (
               <div className="mt-5 border-t border-dashed border-brand-700/30 pt-3 dark:border-brand-500/30">
-                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-brand-900/60 dark:text-brand-300/70">
+                <p className={theme.labelClass}>
                   Signature
                 </p>
                 <SignatureRender
@@ -170,8 +172,8 @@ export default async function PassportPage() {
               </div>
             )}
           </div>
-          <div className="border-t-2 border-dashed border-brand-700/60 bg-brand-50/60 px-6 py-3 dark:border-brand-500/60 dark:bg-brand-900/20">
-            <p className="text-center font-mono text-[10px] uppercase tracking-[0.3em] text-brand-900/70 dark:text-brand-300/70">
+          <div className={theme.footerStripClass}>
+            <p className={theme.footerTextClass}>
               Stamps on next page
             </p>
           </div>
@@ -180,7 +182,7 @@ export default async function PassportPage() {
         <div className="mt-6">
           <Link
             href="/check-in"
-            className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-stamp-600 px-6 text-base font-semibold text-white shadow-md transition-colors hover:bg-stamp-500 active:bg-stamp-500"
+            className={`flex h-14 w-full items-center justify-center gap-2 rounded-full px-6 text-base font-semibold shadow-md transition-colors ${theme.ctaClass}`}
           >
             <StampNewIcon />
             Stamp new place
@@ -213,9 +215,9 @@ export default async function PassportPage() {
           </section>
         )}
 
-        <section className="mt-6 overflow-hidden rounded-2xl border-2 border-brand-700 bg-amber-50/60 dark:border-brand-500 dark:bg-amber-950/20">
-          <div className="border-b-2 border-dashed border-brand-700/60 px-6 py-3 dark:border-brand-500/60">
-            <p className="text-center font-mono text-xs uppercase tracking-[0.4em] text-brand-900 dark:text-brand-300">
+        <section className={`mt-6 overflow-hidden rounded-2xl ${theme.stampsCardClass}`}>
+          <div className={theme.stampsHeaderClass}>
+            <p className={theme.stampsHeaderTextClass}>
               Stamps · {stamps.length}
             </p>
           </div>
@@ -228,17 +230,17 @@ export default async function PassportPage() {
             ) : (
               eventGroups.map(([eId, group]) => (
                 <div key={eId}>
-                  <h3 className="font-mono text-[10px] uppercase tracking-[0.2em] text-brand-900/70 dark:text-brand-300/80">
+                  <h3 className={theme.labelClass}>
                     {group.eventName}
                   </h3>
                   <ul className="mt-2 flex flex-wrap gap-2">
                     {group.stamps.map((s) => (
                       <li
                         key={s.id}
-                        className="inline-flex items-center gap-1.5 rounded-full border-2 border-stamp-600 bg-white px-3 py-1.5 text-xs shadow-sm dark:bg-stone-900"
+                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs ${theme.stampChipClass}`}
                       >
                         <StampBadgeIcon />
-                        <span className="font-semibold text-stone-900 dark:text-stone-100">
+                        <span className={`font-semibold ${theme.stampChipTextClass}`}>
                           {s.activity.name}
                         </span>
                         <span className="text-stone-500 dark:text-stone-400">
@@ -273,13 +275,20 @@ export default async function PassportPage() {
 function Row({
   label,
   children,
+  labelClass,
 }: {
   label: string;
   children: React.ReactNode;
+  labelClass?: string;
 }) {
   return (
     <div>
-      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-brand-900/60 dark:text-brand-300/70">
+      <p
+        className={
+          labelClass ??
+          "font-mono text-[10px] uppercase tracking-[0.2em] text-stone-500 dark:text-stone-400"
+        }
+      >
         {label}
       </p>
       <div className="text-stone-900 dark:text-stone-100">{children}</div>

@@ -25,6 +25,7 @@ model User {
   photoPath    String?
   signatureSvg String? @db.Text
   occupation   String?
+  theme        String  @default("default")
 
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id])
