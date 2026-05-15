@@ -3,10 +3,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getUserSession } from "@/lib/auth/session";
-import { logoutAction } from "@/lib/actions/user-auth";
 import { displayTagLabel } from "@/lib/passport-tags";
 import { parseSignature } from "@/lib/signature";
 import { SignatureRender } from "@/components/passport/SignatureRender";
+import { UserHeader } from "@/components/user/UserHeader";
 import {
   accoladeChips,
   computeAutoAccolades,
@@ -81,22 +81,10 @@ export default async function PassportPage() {
   const signature = parseSignature(user.signatureSvg);
 
   return (
-    <main className="flex flex-1 flex-col items-center px-6 py-10">
-      <div className="w-full max-w-md">
-        <div className="mb-6 flex items-center justify-between">
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-brand-700 dark:text-brand-500">
-            Stamprally
-          </p>
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="inline-flex h-10 items-center justify-center rounded-md px-3 text-sm font-medium text-stone-700 hover:bg-stone-100 active:bg-stone-200 dark:text-stone-300 dark:hover:bg-stone-800"
-            >
-              Sign out
-            </button>
-          </form>
-        </div>
-
+    <>
+      <UserHeader active="passport" />
+      <main className="flex flex-1 flex-col items-center px-4 py-6 sm:px-6 sm:py-10">
+        <div className="w-full max-w-md">
         <div className="overflow-hidden rounded-2xl border-2 border-brand-700 bg-gradient-to-br from-brand-50 to-brand-100 shadow-lg dark:border-brand-500 dark:from-brand-900/40 dark:to-brand-900/10">
           <div className="border-b-2 border-dashed border-brand-700/60 px-6 py-3 dark:border-brand-500/60">
             <p className="text-center font-mono text-xs uppercase tracking-[0.4em] text-brand-900 dark:text-brand-300">
@@ -281,15 +269,10 @@ export default async function PassportPage() {
           >
             Edit passport
           </Link>
-          <Link
-            href="/events"
-            className="inline-flex h-12 items-center justify-center rounded-full border border-stone-300 bg-white px-6 font-medium text-stone-900 shadow-sm transition-colors hover:bg-stone-100 active:bg-stone-200 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:hover:bg-stone-800"
-          >
-            Browse events
-          </Link>
         </div>
-      </div>
-    </main>
+        </div>
+      </main>
+    </>
   );
 }
 

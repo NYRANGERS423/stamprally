@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/user-guard";
 import { db } from "@/lib/db";
+import { UserHeader } from "@/components/user/UserHeader";
 
 interface LeaderboardEntry {
   rank: number;
@@ -91,8 +92,10 @@ export default async function EventDetailPage({
   const myStampedCount = myStampedActivityIds.size;
 
   return (
-    <main className="flex flex-1 flex-col items-center px-4 py-8 sm:px-6">
-      <div className="w-full max-w-3xl space-y-6">
+    <>
+      <UserHeader active="events" />
+      <main className="flex flex-1 flex-col items-center px-4 py-6 sm:px-6 sm:py-8">
+        <div className="w-full max-w-3xl space-y-6">
         <div>
           <Link
             href="/events"
@@ -232,8 +235,9 @@ export default async function EventDetailPage({
             You&apos;re #{myEntry.rank} with {myEntry.stamps} stamps. Keep going!
           </p>
         )}
-      </div>
-    </main>
+        </div>
+      </main>
+    </>
   );
 }
 

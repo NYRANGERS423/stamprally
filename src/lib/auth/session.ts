@@ -27,10 +27,22 @@ function requireSecret(): string {
   return s;
 }
 
+// Cookie `Secure` flag.
+// - AUTH_COOKIE_SECURE=true  → always set Secure (recommended when behind HTTPS)
+// - AUTH_COOKIE_SECURE=false → never set Secure (use for HTTP testing on a LAN
+//                              IP before the reverse proxy is wired up)
+// - unset                    → defaults to true in production, false in dev
+function cookieSecure(): boolean {
+  const v = process.env.AUTH_COOKIE_SECURE?.toLowerCase();
+  if (v === "true" || v === "1") return true;
+  if (v === "false" || v === "0") return false;
+  return process.env.NODE_ENV === "production";
+}
+
 const baseCookieOptions = {
   httpOnly: true,
   sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production",
+  secure: cookieSecure(),
   path: "/",
 };
 

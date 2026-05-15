@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/user-guard";
 import { db } from "@/lib/db";
-import { logoutAction } from "@/lib/actions/user-auth";
+import { UserHeader } from "@/components/user/UserHeader";
 
 export default async function EventsListPage() {
   const { userId } = await requireUser("/events");
@@ -47,33 +47,15 @@ export default async function EventsListPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center px-4 py-8 sm:px-6">
-      <div className="w-full max-w-3xl">
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-[0.3em] text-brand-700 dark:text-brand-500">
-              Stamprally
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-              Events
-            </h1>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href="/passport"
-              className="inline-flex h-10 items-center justify-center rounded-md border border-stone-300 px-3 text-sm font-medium text-stone-700 hover:bg-stone-100 active:bg-stone-200 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
-            >
-              My passport
-            </Link>
-            <form action={logoutAction}>
-              <button
-                type="submit"
-                className="inline-flex h-10 items-center justify-center rounded-md px-3 text-sm font-medium text-stone-700 hover:bg-stone-100 active:bg-stone-200 dark:text-stone-300 dark:hover:bg-stone-800"
-              >
-                Sign out
-              </button>
-            </form>
-          </div>
+    <>
+      <UserHeader active="events" />
+      <main className="flex flex-1 flex-col items-center px-4 py-6 sm:px-6 sm:py-8">
+        <div className="w-full max-w-3xl">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight">Events</h1>
+          <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+            Active company events and your progress in each.
+          </p>
         </div>
 
         {events.length === 0 ? (
@@ -117,7 +99,8 @@ export default async function EventsListPage() {
             })}
           </ul>
         )}
-      </div>
-    </main>
+        </div>
+      </main>
+    </>
   );
 }

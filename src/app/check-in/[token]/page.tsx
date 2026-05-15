@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getUserSession } from "@/lib/auth/session";
+import { UserHeader } from "@/components/user/UserHeader";
 
 type CheckInResult =
   | { kind: "ok"; activityName: string; eventName: string; destName: string }
@@ -100,25 +101,28 @@ export default async function CheckInByToken({
 
   const result = await performCheckIn(session.userId, token);
   return (
-    <main className="flex flex-1 items-center justify-center px-6 py-10">
-      <div className="w-full max-w-sm">
-        <ResultCard result={result} />
-        <div className="mt-6 flex justify-center gap-3">
-          <Link
-            href="/passport"
-            className="inline-flex h-12 items-center justify-center rounded-full bg-brand-600 px-6 text-sm font-medium text-white shadow-sm hover:bg-brand-700 active:bg-brand-700"
-          >
-            Open my passport
-          </Link>
-          <Link
-            href="/check-in"
-            className="inline-flex h-12 items-center justify-center rounded-full border border-stone-300 bg-white px-6 text-sm font-medium text-stone-900 hover:bg-stone-100 active:bg-stone-200 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:hover:bg-stone-800"
-          >
-            Stamp another
-          </Link>
+    <>
+      <UserHeader active="stamp" />
+      <main className="flex flex-1 items-center justify-center px-4 py-6 sm:px-6 sm:py-10">
+        <div className="w-full max-w-sm">
+          <ResultCard result={result} />
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/passport"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-brand-600 px-6 text-sm font-medium text-white shadow-sm hover:bg-brand-700 active:bg-brand-700"
+            >
+              Open my passport
+            </Link>
+            <Link
+              href="/check-in"
+              className="inline-flex h-12 items-center justify-center rounded-full border border-stone-300 bg-white px-6 text-sm font-medium text-stone-900 hover:bg-stone-100 active:bg-stone-200 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:hover:bg-stone-800"
+            >
+              Stamp another
+            </Link>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }
 
