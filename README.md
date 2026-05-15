@@ -36,99 +36,77 @@ docker compose down                    # stop everything (data persists)
 docker compose down -v                 # nuke data too
 ```
 
+> Local dev uses **two containers** (`app` + `db`) for fast hot reload. Production deploys use **a single combined container** — see below.
+
 ---
 
 ## Production image
 
-Every push to `main` triggers [GitHub Actions](.github/workflows/publish.yml) to build and publish a multi-arch image to **GHCR**:
+Every push to `main` triggers [GitHub Actions](.github/workflows/publish.yml) to build a single combined image and publish it to **GHCR**:
 
 ```
 ghcr.io/nyrangers423/stamprally:latest
 ghcr.io/nyrangers423/stamprally:sha-<short-commit>
 ```
 
-The image is **self-contained**: it includes the Prisma CLI + migration files. On every start, the container's entrypoint runs `prisma migrate deploy` (no-op when nothing's pending), then launches the Next.js standalone server. No separate migrate service or job is needed.
+The image **bundles Postgres 16 and the Stamprally Next.js app together** in one container. On start, an entrypoint script:
+1. Starts Postgres in the background
+2. Waits for it to accept connections
+3. Applies any pending Prisma migrations (no-op when there's nothing new)
+4. Starts the Next.js standalone server in the foreground
+
+Data lives on two host bind mounts (Postgres data and uploaded photos), so it survives container recreation and updates.
 
 ---
 
 ## Production deploy — Unraid Docker UI (recommended)
 
-This setup uses two containers configured directly in the Unraid Docker tab. No SSH, no compose file, no `git clone`. Updates are just "force update" in the UI (or scheduled via the [Auto Update Applications](https://forums.unraid.net/topic/89343-plugin-auto-update-applications/) plugin).
-
-### 1. Pre-flight
-
-- Make sure your Unraid Docker tab has a **custom network** (so the two containers can talk by name). On Unraid: **Settings → Docker → enable advanced view → Preserve user defined networks: Yes**, then SSH in once and run:
-  ```
-  docker network create stamprally-net
-  ```
-- Pick where the data lives. Conventional: `/mnt/user/appdata/stamprally/`. Create it from the Unraid file manager, or SSH:
-  ```
-  mkdir -p /mnt/user/appdata/stamprally/db
-  mkdir -p /mnt/user/appdata/stamprally/uploads
-  ```
-- Generate two long random strings — one for `POSTGRES_PASSWORD`, one for `AUTH_SECRET`. From Unraid shell:
-  ```
-  openssl rand -base64 32
-  openssl rand -base64 32
-  ```
-
-### 2. Postgres container (do this first)
-
-Unraid Docker tab → **Add Container**. Fill in:
-
-| Field | Value |
-|---|---|
-| Name | `stamprally-db` |
-| Repository | `postgres:16-alpine` |
-| Network Type | `Custom: stamprally-net` |
-| **Variables — add:** | |
-| `POSTGRES_USER` | `stamprally` |
-| `POSTGRES_PASSWORD` | _(your generated value — same one you'll paste into the app container below)_ |
-| `POSTGRES_DB` | `stamprally` |
-| `PGDATA` | `/var/lib/postgresql/data/pgdata` |
-| **Paths — add:** | |
-| Container Path | `/var/lib/postgresql/data` |
-| Host Path | `/mnt/user/appdata/stamprally/db` |
-| Access Mode | Read/Write |
-
-Apply. The container should show "started" within a few seconds. Logs (click the icon) should end with `database system is ready to accept connections`.
-
-### 3. App container
-
-Add Container → fill in:
+This is a **single-container** setup. Open the Unraid Docker tab → **Add Container**:
 
 | Field | Value |
 |---|---|
 | Name | `stamprally` |
 | Repository | `ghcr.io/nyrangers423/stamprally:latest` |
-| Network Type | `Custom: stamprally-net` |
 | **Port — add:** | |
 | Container Port | `3000` |
-| Host Port | `3000` _(or whatever you want to publish on)_ |
+| Host Port | `3000` _(or whatever's free)_ |
 | Connection Type | TCP |
-| **Variables — add:** | |
-| `DATABASE_URL` | `postgresql://stamprally:<POSTGRES_PASSWORD>@stamprally-db:5432/stamprally` |
-| `ADMIN_USERNAME` | `admin` _(or whatever)_ |
-| `ADMIN_PASSWORD` | _(your admin password)_ |
-| `AUTH_SECRET` | _(your generated 32+ char value)_ |
-| `APP_URL` | `http://<unraid-ip>:3000` _(temporary; update to your real HTTPS URL once your reverse proxy is wired up)_ |
-| **Paths — add:** | |
+| **Path — add #1 (Postgres data):** | |
+| Container Path | `/var/lib/postgresql/data` |
+| Host Path | `/mnt/user/appdata/stamprally/db` |
+| Access Mode | Read/Write |
+| **Path — add #2 (Uploads):** | |
 | Container Path | `/app/uploads` |
 | Host Path | `/mnt/user/appdata/stamprally/uploads` |
 | Access Mode | Read/Write |
+| **Variables — add:** | |
+| `POSTGRES_USER` | `stamprally` |
+| `POSTGRES_PASSWORD` | _(strong random string)_ |
+| `POSTGRES_DB` | `stamprally` |
+| `ADMIN_USERNAME` | `admin` _(or whatever)_ |
+| `ADMIN_PASSWORD` | _(your admin password)_ |
+| `AUTH_SECRET` | _(strong random 32+ char string)_ |
+| `APP_URL` | `http://<unraid-ip>:3000` _(temporary; switch to the HTTPS URL once your reverse proxy is wired up)_ |
 
-Apply. Watch the logs — they should show:
+Apply. Unraid auto-creates the bind-mount directories.
+
+### Verify
+
+Click `stamprally` → **Logs**. You should see (paraphrased):
+
 ```
+[entrypoint] Starting Postgres...
+... database system is ready to accept connections
+[entrypoint] Postgres is ready.
 [entrypoint] Applying database migrations...
-...
 All migrations have been successfully applied.
-[entrypoint] Starting: node server.js
+[entrypoint] Starting Stamprally...
 ✓ Ready in Xms
 ```
 
 Visit `http://<unraid-ip>:3000` — Stamprally landing page should load.
 
-### 4. Reverse proxy + HTTPS
+### Reverse proxy + HTTPS
 
 The app listens on **plain HTTP** inside the container. Your reverse proxy terminates TLS and forwards to the published port.
 
@@ -136,11 +114,11 @@ The app listens on **plain HTTP** inside the container. Your reverse proxy termi
 - Forward to: `http://<unraid-ip>:<APP_PORT>` (typically 3000)
 - TLS: managed by the proxy (Let's Encrypt or your wildcard cert)
 
-**Important:** the session cookie has `Secure: true` in production, so HTTPS at the proxy is **required** — login won't work over plain HTTP from the public URL. Direct `http://unraid-ip:3000` access on your LAN works for testing because browsers exempt LAN IPs from the `Secure` requirement on some flag combinations, but don't rely on this.
+**Important:** the session cookie has `Secure: true` in production, so HTTPS at the proxy is **required** — login won't stick over plain HTTP from a public URL.
 
-After the reverse proxy is live: edit the `stamprally` container → set `APP_URL=https://stamprally.<your-domain>` → Apply. The container restarts and QR codes generated from then on point at the public URL.
+After the reverse proxy is live: edit the `stamprally` container → set `APP_URL=https://stamprally.<your-domain>` → Apply. The container restarts and any QR codes generated from then on point at the public URL.
 
-### 5. First-run bootstrap
+### First-run bootstrap
 
 Open `https://<your-domain>/admin/login` and sign in with `ADMIN_USERNAME` / `ADMIN_PASSWORD`. Then in order:
 1. **Departments / Companies / Regions** — add at least one of each (signup dropdowns).
@@ -150,14 +128,14 @@ Open `https://<your-domain>/admin/login` and sign in with `ADMIN_USERNAME` / `AD
 
 Users sign up at `/signup`. Kiosks sign in at `/kiosk/login` and pick an activity to display its QR.
 
-### 6. Backups
+### Backups
 
-Both data dirs live under `/mnt/user/appdata/stamprally/` — easy to back up with the **CA Backup / Restore Appdata** plugin. Recommended schedule: nightly, retain 7 days.
+Both data dirs live under `/mnt/user/appdata/stamprally/` — back them up with the **CA Backup / Restore Appdata** plugin. Recommended schedule: nightly, retain 7 days.
 
 Or by hand from the Unraid shell:
 ```
-# Database
-docker exec stamprally-db pg_dump -U stamprally stamprally \
+# Database (pg_dump from inside the running container)
+docker exec stamprally pg_dump -U stamprally stamprally \
   > /mnt/user/backups/stamprally-$(date +%F).sql
 
 # Uploads
@@ -165,30 +143,32 @@ tar -czf /mnt/user/backups/stamprally-uploads-$(date +%F).tar.gz \
   -C /mnt/user/appdata/stamprally uploads
 ```
 
-### 7. Updates
+### Updates
 
-Each push to `main` rebuilds the image. To pull the new version on Unraid:
-- **Manual:** Unraid Docker tab → `stamprally` container → **Force update**. Pulls the new `:latest`, recreates the container, entrypoint re-runs `migrate deploy` (applies any new migrations), serves with the new code. Data in `/mnt/user/appdata/stamprally/` is untouched.
-- **Auto:** install the **Auto Update Applications** plugin and set `stamprally` to auto-update on whatever cadence you like.
+Each push to `main` rebuilds the image automatically. To pull the new version on Unraid:
+- **Manual:** Unraid Docker tab → `stamprally` container → **Force update**. New `:latest` is pulled, container recreates, entrypoint reapplies any new migrations, app serves with new code. Data in `/mnt/user/appdata/stamprally/` is untouched.
+- **Auto:** install the **Auto Update Applications** plugin and set `stamprally` to auto-update on your preferred cadence.
 
 ---
 
 ## Production deploy — alternative: compose + SSH
 
-If you'd rather skip the Docker UI and just paste compose commands:
+If you'd rather use compose instead of the Unraid Docker UI:
 
 ```
 ssh root@<unraid-ip>
 mkdir -p /mnt/user/appdata/stamprally
 cd /mnt/user/appdata/stamprally
-# Either clone (if git is available) or scp the compose + .env file here.
+
+# Grab the compose file + env template
 curl -L https://raw.githubusercontent.com/NYRANGERS423/stamprally/main/docker-compose.prod.yml -o docker-compose.prod.yml
 curl -L https://raw.githubusercontent.com/NYRANGERS423/stamprally/main/.env.example -o .env
+
 # Edit .env with production secrets, then:
 DATA_DIR=/mnt/user/appdata/stamprally docker compose -f docker-compose.prod.yml up -d
 ```
 
-This pulls the published image from GHCR, creates the two containers, and bind-mounts `/mnt/user/appdata/stamprally/{db,uploads}` for data.
+Same combined image, same bind-mount layout — just a different way to wire it up.
 
 ---
 
@@ -201,8 +181,7 @@ This pulls the published image from GHCR, creates the two containers, and bind-m
 | `/passport`, `/passport/edit` | User | Profile, photo cropper, signature, tags, stats, accolades |
 | `/check-in`, `/check-in/[token]` | User | Type the 4-digit code or scan a QR |
 | `/events`, `/events/[slug]` | User | Event list + leaderboard + progress |
-| `/admin/login` | Admin | env-var creds |
-| `/admin/...` | Admin | Events tree, kiosk users, access codes, dropdowns, settings |
+| `/admin/login`, `/admin/...` | Admin | env-var creds. Events tree, kiosk users, access codes, dropdowns, settings |
 | `/kiosk/login`, `/kiosk/...` | Kiosk | Event/destination/activity picker + QR display |
 
 ---
@@ -210,7 +189,7 @@ This pulls the published image from GHCR, creates the two containers, and bind-m
 ## Troubleshooting
 
 - **`AUTH_SECRET env var must be set and at least 32 characters long`** — set or lengthen `AUTH_SECRET`.
-- **Postgres container won't start with permission error on `/var/lib/postgresql/data`** — make sure `PGDATA=/var/lib/postgresql/data/pgdata` is set (so Postgres creates a writable subdir inside the bind mount, instead of trying to use the mount root which may have non-standard ownership on Unraid user shares).
+- **Container won't start, Postgres complains about data directory** — make sure the `/var/lib/postgresql/data` bind mount path exists on the host and isn't readonly. The bundled Postgres uses `PGDATA=/var/lib/postgresql/data/pgdata` so the mount root itself can have non-Postgres contents.
 - **QR codes point at the wrong domain** — `APP_URL` is read at render time. Update the env var on the `stamprally` container and Apply — the container restarts and new QR codes use the new URL.
 - **Signed-in user gets bounced back to /login on every request** — usually means the public URL is HTTP rather than HTTPS. The session cookie has `Secure: true` in prod, so requests must arrive over HTTPS via your reverse proxy.
-- **`stamprally` container can't reach `stamprally-db`** — both containers need to be on the same custom Docker network. Check `Network Type: Custom: stamprally-net` on both containers.
+- **Container restarts in a loop** — check `docker logs stamprally`. The combined entrypoint will exit the container if either Postgres or the app crashes; Unraid's `restart: unless-stopped` policy will restart it. If Postgres can't start, fix the data dir permissions or contents.
