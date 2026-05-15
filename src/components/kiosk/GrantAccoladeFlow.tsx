@@ -42,14 +42,16 @@ function PickTemplate({
         <h1 className="text-2xl font-semibold tracking-tight">Give accolade</h1>
         <Link
           href="/kiosk"
-          className="inline-flex h-10 items-center rounded-md border border-stone-300 px-3 text-sm font-medium text-stone-700 hover:bg-stone-100 active:bg-stone-200 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
+          className="inline-flex h-10 items-center gap-1.5 rounded-full border border-stone-300 bg-white px-4 text-sm font-medium text-stone-700 shadow-sm transition-colors hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
         >
-          ← Kiosk home
+          <BackArrow />
+          Kiosk home
         </Link>
       </div>
       <p className="text-sm text-stone-600 dark:text-stone-400">
-        Pick an accolade, then scan each user&apos;s passport QR. The camera
-        stays on between users so you can rapid-fire a whole group.
+        Pick an accolade, then scan each user&apos;s passport QR or type
+        their 6-character code. Tap &ldquo;Open camera&rdquo; when you want
+        to scan — it stays on between users for rapid-fire groups.
       </p>
       {templates.length === 0 ? (
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
@@ -180,15 +182,6 @@ function ScanAndGrant({
     setScanning(false);
   }
 
-  // Auto-start the camera as soon as we know it's supported, so the kiosk
-  // operator doesn't need to tap a button between users.
-  useEffect(() => {
-    if (supported === true && !scanning && !scannerRef.current) {
-      startScan();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supported]);
-
   function handleScan(raw: string) {
     if (!raw) return;
     let value = raw.trim();
@@ -263,8 +256,9 @@ function ScanAndGrant({
             stopScan();
             onChange();
           }}
-          className="inline-flex h-10 items-center rounded-md border border-stone-300 px-3 text-sm font-medium text-stone-700 hover:bg-stone-100 active:bg-stone-200 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
+          className="inline-flex h-10 items-center gap-1.5 rounded-full border border-stone-300 bg-white px-4 text-sm font-medium text-stone-700 shadow-sm transition-colors hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
         >
+          <BackArrow />
           Change accolade
         </button>
       </div>
@@ -455,4 +449,23 @@ function ResultBanner({
     );
   }
   return null;
+}
+
+function BackArrow() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <line x1="19" y1="12" x2="5" y2="12" />
+      <polyline points="12 19 5 12 12 5" />
+    </svg>
+  );
 }
