@@ -37,8 +37,9 @@ model User {
   startDate      DateTime
   passportNumber String   @unique
 
-  tags   PassportTag[]
-  stamps Stamp[]
+  tags      PassportTag[]
+  stamps    Stamp[]
+  accolades Accolade[]
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -58,6 +59,19 @@ model PassportTag {
 
   @@unique([userId, key])
   @@index([key])
+}
+
+model Accolade {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label       String
+  description String?
+  emoji       String?
+  awardedBy   String
+  awardedAt   DateTime @default(now())
+
+  @@index([userId])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

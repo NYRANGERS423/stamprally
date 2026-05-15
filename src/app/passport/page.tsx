@@ -13,6 +13,7 @@ import {
   accoladeChips,
   computeAutoAccolades,
   computePersonalStats,
+  loadManualAccolades,
 } from "@/lib/passport-stats";
 
 export default async function PassportPage({
@@ -29,7 +30,7 @@ export default async function PassportPage({
     redirect("/force-change-password");
   }
 
-  const [user, stamps, stats, autoAccolades] = await Promise.all([
+  const [user, stamps, stats, autoAccolades, manualAccolades] = await Promise.all([
     db.user.findUnique({
       where: { id: session.userId },
       include: {
@@ -54,8 +55,10 @@ export default async function PassportPage({
     }),
     computePersonalStats(session.userId),
     computeAutoAccolades(session.userId),
+    loadManualAccolades(session.userId),
   ]);
   const accolades = accoladeChips(autoAccolades);
+  const totalAccolades = accolades.length + manualAccolades.length;
   if (!user) {
     redirect("/login");
   }
@@ -199,15 +202,25 @@ export default async function PassportPage({
         <section className="mt-6 grid grid-cols-3 gap-3 text-center">
           <Stat label="Stamps" value={stats.totalStamps} />
           <Stat label="Events" value={stats.eventsParticipated} />
-          <Stat label="Accolades" value={accolades.length} />
+          <Stat label="Accolades" value={totalAccolades} />
         </section>
 
-        {accolades.length > 0 && (
+        {totalAccolades > 0 && (
           <section className="mt-4 overflow-hidden rounded-2xl border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900">
             <div className="border-b border-stone-200 px-4 py-3 dark:border-stone-800">
               <h2 className="text-sm font-medium">Accolades</h2>
             </div>
             <ul className="flex flex-wrap gap-2 p-4">
+              {manualAccolades.map((a) => (
+                <li
+                  key={a.id}
+                  title={a.description ?? undefined}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-stamp-600 bg-stamp-50 px-3 py-1.5 text-xs font-semibold text-stamp-700 dark:border-stamp-500 dark:bg-stamp-600/20 dark:text-stamp-300"
+                >
+                  {a.emoji && <span>{a.emoji}</span>}
+                  {a.label}
+                </li>
+              ))}
               {accolades.map((a, i) => (
                 <li
                   key={`${a.kind}-${i}`}

@@ -27,6 +27,23 @@ export interface UserAccolades {
   firstStamper: boolean; // has at least one stamp
 }
 
+export interface ManualAccolade {
+  id: string;
+  label: string;
+  description: string | null;
+  emoji: string | null;
+}
+
+export async function loadManualAccolades(
+  userId: string,
+): Promise<ManualAccolade[]> {
+  return db.accolade.findMany({
+    where: { userId },
+    orderBy: { awardedAt: "desc" },
+    select: { id: true, label: true, description: true, emoji: true },
+  });
+}
+
 const MARATHONER_THRESHOLD = 3;
 
 export async function computePersonalStats(
