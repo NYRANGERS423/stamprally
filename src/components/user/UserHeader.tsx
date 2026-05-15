@@ -9,6 +9,7 @@ interface NavItem {
 const DEFAULT_NAV: NavItem[] = [
   { href: "/passport", label: "Passport" },
   { href: "/events", label: "Events" },
+  { href: "/leaderboard", label: "Ranks" },
   { href: "/check-in", label: "Stamp" },
 ];
 
@@ -17,7 +18,7 @@ export function UserHeader({
   nav = DEFAULT_NAV,
   showLogout = true,
 }: {
-  active?: "passport" | "events" | "stamp" | "edit" | null;
+  active?: "passport" | "events" | "stamp" | "leaderboard" | "edit" | null;
   nav?: NavItem[];
   showLogout?: boolean;
 }) {
@@ -42,6 +43,7 @@ export function UserHeader({
               ((active === "passport" || active === "edit") &&
                 item.href === "/passport") ||
               (active === "events" && item.href === "/events") ||
+              (active === "leaderboard" && item.href === "/leaderboard") ||
               (active === "stamp" && item.href === "/check-in");
             return (
               <Link
