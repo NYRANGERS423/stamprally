@@ -13,7 +13,7 @@ import {
   revokeAccoladeAction,
   type GrantAccoladeState,
 } from "@/lib/actions/admin-accolades";
-import { SUGGESTED_ACCOLADES } from "@/lib/accolades";
+import { THEME_LIST } from "@/lib/themes";
 import {
   CARD,
   CARD_HEADER,
@@ -50,6 +50,8 @@ interface AccoladeRow {
   label: string;
   description: string | null;
   emoji: string | null;
+  themeId: string | null;
+  eventId: string | null;
   awardedBy: string;
   awardedAt: Date;
 }
@@ -60,6 +62,21 @@ interface ActivityOpt {
   eventName: string;
 }
 
+interface TemplateOpt {
+  id: string;
+  label: string;
+  description: string | null;
+  emoji: string | null;
+  themeId: string | null;
+  eventId: string | null;
+  eventName: string | null;
+}
+
+interface EventOpt {
+  id: string;
+  name: string;
+}
+
 const initAcc: GrantAccoladeState = {};
 
 export function UserDetailPanel({
@@ -67,11 +84,15 @@ export function UserDetailPanel({
   stamps,
   accolades,
   activities,
+  templates,
+  events,
 }: {
   user: UserData;
   stamps: StampRow[];
   accolades: AccoladeRow[];
   activities: ActivityOpt[];
+  templates: TemplateOpt[];
+  events: EventOpt[];
 }) {
   return (
     <div className="space-y-6">
@@ -103,7 +124,8 @@ export function UserDetailPanel({
               {user.firstName} {user.lastName}
             </h1>
             <p className="text-xs text-stone-500 dark:text-stone-400">
-              {user.email} · <span className="font-mono">{user.passportNumber}</span>
+              {user.email} ·{" "}
+              <span className="font-mono">{user.passportNumber}</span>
             </p>
           </div>
         </div>
@@ -113,7 +135,12 @@ export function UserDetailPanel({
 
       <StampsCard userId={user.id} stamps={stamps} activities={activities} />
 
-      <AccoladesCard userId={user.id} accolades={accolades} />
+      <AccoladesCard
+        userId={user.id}
+        accolades={accolades}
+        templates={templates}
+        events={events}
+      />
     </div>
   );
 }
@@ -148,7 +175,11 @@ function ResetPasswordCard({
           type="button"
           disabled={pending}
           onClick={() => {
-            if (!confirm("Reset this user's password? You will see the temporary password once."))
+            if (
+              !confirm(
+                "Reset this user's password? You will see the temporary password once.",
+              )
+            )
               return;
             setError(null);
             start(async () => {
@@ -227,7 +258,7 @@ function StampsCard({
           <select
             value={selectedActivity}
             onChange={(e) => setSelectedActivity(e.target.value)}
-            className={INPUT_CLASS + " flex-1 min-w-[180px]"}
+            className={INPUT_CLASS + " min-w-[180px] flex-1"}
           >
             <option value="">Pick an activity…</option>
             {activities.map((a) => (
@@ -303,46 +334,84 @@ function StampRowItem({ stamp }: { stamp: StampRow }) {
 function AccoladesCard({
   userId,
   accolades,
+  templates,
+  events,
 }: {
   userId: string;
   accolades: AccoladeRow[];
+  templates: TemplateOpt[];
+  events: EventOpt[];
 }) {
   const bound = grantAccoladeAction.bind(null, userId);
   const [state, action, pending] = useActionState(bound, initAcc);
   const [revokePending, startRevoke] = useTransition();
 
-  function applySuggestion(s: { label: string; emoji: string; description: string }) {
-    const form = document.getElementById("grant-accolade-form") as HTMLFormElement | null;
+  function applyTemplate(t: TemplateOpt) {
+    const form = document.getElementById(
+      "grant-accolade-form",
+    ) as HTMLFormElement | null;
     if (!form) return;
-    (form.elements.namedItem("label") as HTMLInputElement).value = s.label;
-    (form.elements.namedItem("emoji") as HTMLInputElement).value = s.emoji;
-    (form.elements.namedItem("description") as HTMLTextAreaElement).value = s.description;
+    (form.elements.namedItem("label") as HTMLInputElement).value = t.label;
+    (form.elements.namedItem("emoji") as HTMLInputElement).value =
+      t.emoji ?? "";
+    (form.elements.namedItem("description") as HTMLTextAreaElement).value =
+      t.description ?? "";
+    (form.elements.namedItem("themeId") as HTMLSelectElement).value =
+      t.themeId ?? "";
+    (form.elements.namedItem("eventId") as HTMLSelectElement).value =
+      t.eventId ?? "";
   }
 
   return (
     <section className={CARD}>
       <div className={CARD_HEADER}>
-        <h2 className="text-sm font-medium">Accolades ({accolades.length})</h2>
+        <h2 className="text-sm font-medium">
+          Accolades ({accolades.length})
+        </h2>
       </div>
 
       <div className="border-b border-stone-200 p-4 dark:border-stone-800">
-        <p className="mb-2 text-xs font-medium text-stone-700 dark:text-stone-300">
-          Suggestions
-        </p>
-        <ul className="mb-3 flex flex-wrap gap-2">
-          {SUGGESTED_ACCOLADES.map((s) => (
-            <li key={s.label}>
-              <button
-                type="button"
-                onClick={() => applySuggestion(s)}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-stone-300 bg-stone-50 px-3 text-xs font-medium hover:bg-stone-100 active:bg-stone-200 dark:border-stone-700 dark:bg-stone-800 dark:hover:bg-stone-700"
-              >
-                <span>{s.emoji}</span>
-                {s.label}
-              </button>
-            </li>
-          ))}
-        </ul>
+        {templates.length > 0 && (
+          <>
+            <p className="mb-2 text-xs font-medium text-stone-700 dark:text-stone-300">
+              From catalog ({templates.length})
+            </p>
+            <ul className="mb-4 flex flex-wrap gap-2">
+              {templates.map((t) => (
+                <li key={t.id}>
+                  <button
+                    type="button"
+                    onClick={() => applyTemplate(t)}
+                    title={
+                      t.eventName
+                        ? `Tied to ${t.eventName}`
+                        : "Standalone accolade"
+                    }
+                    className="inline-flex h-9 items-center gap-1.5 rounded-full border border-stone-300 bg-stone-50 px-3 text-xs font-medium hover:bg-stone-100 active:bg-stone-200 dark:border-stone-700 dark:bg-stone-800 dark:hover:bg-stone-700"
+                  >
+                    {t.emoji && <span>{t.emoji}</span>}
+                    {t.label}
+                    {t.eventName && (
+                      <span className="ml-1 text-stone-500 dark:text-stone-400">
+                        · {t.eventName}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        {templates.length === 0 && (
+          <p className="mb-3 rounded-md bg-stone-50 px-3 py-2 text-xs text-stone-600 dark:bg-stone-800/50 dark:text-stone-400">
+            No accolades in the catalog yet. Add some at{" "}
+            <Link href="/admin/accolades" className="underline">
+              Admin → Accolades
+            </Link>
+            , or fill in a custom one below.
+          </p>
+        )}
 
         <form id="grant-accolade-form" action={action} className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
@@ -382,6 +451,42 @@ function AccoladesCard({
               className="mt-1 block w-full rounded-md border border-stone-300 bg-white px-3 py-2 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-stone-700 dark:bg-stone-900"
             />
           </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs font-medium text-stone-700 dark:text-stone-300">
+                Theme
+              </label>
+              <select
+                name="themeId"
+                defaultValue=""
+                className={INPUT_CLASS + " mt-1"}
+              >
+                <option value="">— General —</option>
+                {THEME_LIST.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.emoji} {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-stone-700 dark:text-stone-300">
+                Event
+              </label>
+              <select
+                name="eventId"
+                defaultValue=""
+                className={INPUT_CLASS + " mt-1"}
+              >
+                <option value="">— Standalone —</option>
+                {events.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           {state.error && (
             <p className="text-sm text-red-600 dark:text-red-400">
               {state.error}
@@ -420,7 +525,9 @@ function AccoladesCard({
                   </p>
                 )}
                 <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
-                  Granted by {a.awardedBy} · {a.awardedAt.toLocaleDateString()}
+                  Granted by {a.awardedBy} ·{" "}
+                  {a.awardedAt.toLocaleDateString()}
+                  {a.themeId && ` · theme: ${a.themeId}`}
                 </p>
               </div>
               <button

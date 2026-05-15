@@ -8,7 +8,7 @@ import { parseSignature } from "@/lib/signature";
 import { SignatureRender } from "@/components/passport/SignatureRender";
 import { StampedFlash } from "@/components/passport/StampedFlash";
 import { UserHeader } from "@/components/user/UserHeader";
-import { getTheme } from "@/lib/themes";
+import { getTheme, THEMES } from "@/lib/themes";
 import {
   accoladeChips,
   computeAutoAccolades,
@@ -231,16 +231,22 @@ export default async function PassportPage({
               <h2 className="text-sm font-medium">Accolades</h2>
             </div>
             <ul className="flex flex-wrap gap-2 p-4">
-              {manualAccolades.map((a) => (
-                <li
-                  key={a.id}
-                  title={a.description ?? undefined}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-stamp-600 bg-stamp-50 px-3 py-1.5 text-xs font-semibold text-stamp-700 dark:border-stamp-500 dark:bg-stamp-600/20 dark:text-stamp-300"
-                >
-                  {a.emoji && <span>{a.emoji}</span>}
-                  {a.label}
-                </li>
-              ))}
+              {manualAccolades.map((a) => {
+                const accTheme =
+                  a.themeId && a.themeId in THEMES
+                    ? THEMES[a.themeId as keyof typeof THEMES]
+                    : theme;
+                return (
+                  <li
+                    key={a.id}
+                    title={a.description ?? undefined}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${accTheme.tagChipClass}`}
+                  >
+                    {a.emoji && <span>{a.emoji}</span>}
+                    {a.label}
+                  </li>
+                );
+              })}
               {accolades.map((a, i) => (
                 <li
                   key={`${a.kind}-${i}`}

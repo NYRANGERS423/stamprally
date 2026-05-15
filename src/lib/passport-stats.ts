@@ -32,6 +32,8 @@ export interface ManualAccolade {
   label: string;
   description: string | null;
   emoji: string | null;
+  themeId: string | null;
+  eventId: string | null;
 }
 
 export async function loadManualAccolades(
@@ -40,7 +42,14 @@ export async function loadManualAccolades(
   return db.accolade.findMany({
     where: { userId },
     orderBy: { awardedAt: "desc" },
-    select: { id: true, label: true, description: true, emoji: true },
+    select: {
+      id: true,
+      label: true,
+      description: true,
+      emoji: true,
+      themeId: true,
+      eventId: true,
+    },
   });
 }
 

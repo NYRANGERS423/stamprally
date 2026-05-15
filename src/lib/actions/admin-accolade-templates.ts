@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth/admin-guard";
 import { THEMES } from "@/lib/themes";
 
-export interface GrantAccoladeState {
+export interface AccoladeTemplateFormState {
   error?: string;
   ok?: boolean;
 }
@@ -43,40 +43,63 @@ const schema = z.object({
     .transform((v) => (v ? v : null)),
 });
 
-export async function grantAccoladeAction(
-  userId: string,
-  _prev: GrantAccoladeState,
+export async function createAccoladeTemplateAction(
+  _prev: AccoladeTemplateFormState,
   formData: FormData,
-): Promise<GrantAccoladeState> {
-  const session = await requireAdmin();
+): Promise<AccoladeTemplateFormState> {
+  await requireAdmin();
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
-  await db.accolade.create({
+  await db.accoladeTemplate.create({
     data: {
-      userId,
       label: parsed.data.label,
       description: parsed.data.description,
       emoji: parsed.data.emoji,
       themeId: parsed.data.themeId,
       eventId: parsed.data.eventId,
-      awardedBy: session.username ?? "admin",
     },
   });
-  revalidatePath(`/admin/users/${userId}`);
-  revalidatePath("/passport");
+  revalidatePath("/admin/accolades");
   return { ok: true };
 }
 
-export async function revokeAccoladeAction(accoladeId: string): Promise<void> {
+export async function updateAccoladeTemplateAction(
+  id: string,
+  _prev: AccoladeTemplateFormState,
+  formData: FormData,
+): Promise<AccoladeTemplateFormState> {
   await requireAdmin();
-  const a = await db.accolade.findUnique({
-    where: { id: accoladeId },
-    select: { userId: true },
+  const parsed = schema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+  await db.accoladeTemplate.update({
+    where: { id },
+    data: {
+      label: parsed.data.label,
+      description: parsed.data.description,
+      emoji: parsed.data.emoji,
+      themeId: parsed.data.themeId,
+      eventId: parsed.data.eventId,
+    },
   });
-  if (!a) return;
-  await db.accolade.delete({ where: { id: accoladeId } });
-  revalidatePath(`/admin/users/${a.userId}`);
-  revalidatePath("/passport");
+  revalidatePath("/admin/accolades");
+  return { ok: true };
+}
+
+export async function toggleAccoladeTemplateActiveAction(
+  id: string,
+  active: boolean,
+): Promise<void> {
+  await requireAdmin();
+  await db.accoladeTemplate.update({ where: { id }, data: { active } });
+  revalidatePath("/admin/accolades");
+}
+
+export async function deleteAccoladeTemplateAction(id: string): Promise<void> {
+  await requireAdmin();
+  await db.accoladeTemplate.delete({ where: { id } });
+  revalidatePath("/admin/accolades");
 }
