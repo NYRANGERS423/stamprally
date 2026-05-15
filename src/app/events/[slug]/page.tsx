@@ -12,6 +12,7 @@ interface LeaderboardEntry {
   lastName: string;
   photoPath: string | null;
   stamps: number;
+  accolades: number;
 }
 
 export default async function EventDetailPage({
@@ -36,7 +37,7 @@ export default async function EventDetailPage({
 
   const allActivityIds = event.activities.map((a) => a.id);
 
-  const [myStamps, leaderboardRaw] = await Promise.all([
+  const [myStamps, leaderboardRaw, accoladeRaw] = await Promise.all([
     db.stamp.findMany({
       where: { userId, activityId: { in: allActivityIds } },
       select: { activityId: true },
@@ -48,8 +49,16 @@ export default async function EventDetailPage({
       orderBy: { _count: { userId: "desc" } },
       take: 50,
     }),
+    db.accolade.groupBy({
+      by: ["userId"],
+      where: { eventId: event.id },
+      _count: { _all: true },
+    }),
   ]);
   const myStampedActivityIds = new Set(myStamps.map((s) => s.activityId));
+  const accoladeCountByUser = new Map(
+    accoladeRaw.map((r) => [r.userId, r._count._all]),
+  );
 
   const leaderboardUserIds = leaderboardRaw.map((r) => r.userId);
   const leaderboardUsers = leaderboardUserIds.length
@@ -76,6 +85,7 @@ export default async function EventDetailPage({
         lastName: u.lastName,
         photoPath: u.photoPath,
         stamps: r._count._all,
+        accolades: accoladeCountByUser.get(r.userId) ?? 0,
       };
     })
     .filter((x): x is LeaderboardEntry => x !== null);
@@ -210,6 +220,15 @@ export default async function EventDetailPage({
                         )}
                       </p>
                     </div>
+                    {entry.accolades > 0 && (
+                      <span
+                        className="inline-flex items-center gap-0.5 font-mono text-xs font-semibold text-stamp-700 dark:text-stamp-500"
+                        title={`${entry.accolades} accolade${entry.accolades === 1 ? "" : "s"} for this event`}
+                      >
+                        <span aria-hidden>★</span>
+                        {entry.accolades}
+                      </span>
+                    )}
                     <span className="font-mono text-sm font-semibold">
                       {entry.stamps}
                     </span>
