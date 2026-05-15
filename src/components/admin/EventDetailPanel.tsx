@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useTransition } from "react";
+import { useActionState, useState, useTransition } from "react";
 import {
   deleteEventAction,
   toggleEventActiveAction,
@@ -13,6 +13,7 @@ import {
   deleteActivityAction,
   regenerateActivityCodesAction,
   toggleActivityActiveAction,
+  updateActivityAction,
   type ActivityFormState,
 } from "@/lib/actions/admin-activities";
 import {
@@ -41,6 +42,7 @@ interface ActivityData {
   name: string;
   description: string | null;
   order: number;
+  points: number;
   qrToken: string;
   fallbackCode: string;
   active: boolean;
@@ -187,36 +189,7 @@ export function EventDetailPanel({
           <h2 className="text-sm font-medium">Add activity</h2>
         </div>
         <form action={aAction} className="space-y-3 p-4">
-          <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
-            <Field label="Name *">
-              <input
-                name="name"
-                required
-                maxLength={120}
-                className={INPUT_CLASS}
-                placeholder="Coffee bar"
-              />
-            </Field>
-            <Field label="Display order" hint="Lower = earlier">
-              <input
-                name="order"
-                type="number"
-                defaultValue={activities.length}
-                className={INPUT_CLASS}
-              />
-            </Field>
-            <div className="sm:col-span-2">
-              <Field label="Description">
-                <textarea
-                  name="description"
-                  rows={2}
-                  maxLength={2000}
-                  className={TEXTAREA_CLASS}
-                  placeholder="Short blurb shown on the kiosk screen"
-                />
-              </Field>
-            </div>
-          </div>
+          <ActivityFields defaultOrder={activities.length} />
           {aState.error && (
             <p className="text-sm text-red-600 dark:text-red-400">
               {aState.error}
@@ -263,6 +236,19 @@ function ActivityRow({
   activity: ActivityData;
 }) {
   const [pending, start] = useTransition();
+  const [editing, setEditing] = useState(false);
+
+  if (editing) {
+    return (
+      <li className="px-4 py-4">
+        <EditActivityForm
+          eventId={eventId}
+          activity={activity}
+          onDone={() => setEditing(false)}
+        />
+      </li>
+    );
+  }
   return (
     <li className="space-y-2 px-4 py-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -275,6 +261,12 @@ function ActivityRow({
           )}
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-500 dark:text-stone-400">
             <span>{activity._count.stamps} stamps</span>
+            <span>
+              Worth{" "}
+              <span className="font-mono text-stone-900 dark:text-stone-100">
+                {activity.points} pt{activity.points === 1 ? "" : "s"}
+              </span>
+            </span>
             <span>
               Fallback code:{" "}
               <span className="font-mono text-stone-900 dark:text-stone-100">
@@ -289,6 +281,14 @@ function ActivityRow({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => setEditing(true)}
+            className={SMALL_BTN}
+          >
+            Edit
+          </button>
           <button
             type="button"
             disabled={pending}
@@ -344,6 +344,96 @@ function ActivityRow({
         </div>
       </div>
     </li>
+  );
+}
+
+function EditActivityForm({
+  eventId,
+  activity,
+  onDone,
+}: {
+  eventId: string;
+  activity: ActivityData;
+  onDone: () => void;
+}) {
+  const bound = updateActivityAction.bind(null, eventId, activity.id);
+  const [state, action, pending] = useActionState(bound, initAct);
+  if (state.ok) {
+    queueMicrotask(onDone);
+  }
+  return (
+    <form action={action} className="space-y-3">
+      <ActivityFields defaults={activity} />
+      {state.error && (
+        <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <button type="submit" disabled={pending} className={PRIMARY_BTN}>
+          {pending ? "Saving…" : "Save changes"}
+        </button>
+        <button
+          type="button"
+          onClick={onDone}
+          disabled={pending}
+          className={SECONDARY_BTN}
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function ActivityFields({
+  defaults,
+  defaultOrder,
+}: {
+  defaults?: ActivityData;
+  defaultOrder?: number;
+}) {
+  return (
+    <>
+      <div className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">
+        <Field label="Name *">
+          <input
+            name="name"
+            required
+            maxLength={120}
+            defaultValue={defaults?.name ?? ""}
+            className={INPUT_CLASS}
+            placeholder="Coffee bar"
+          />
+        </Field>
+        <Field label="Display order" hint="Lower = earlier">
+          <input
+            name="order"
+            type="number"
+            defaultValue={defaults?.order ?? defaultOrder ?? 0}
+            className={INPUT_CLASS}
+          />
+        </Field>
+        <Field label="Points" hint="Counted on leaderboard">
+          <input
+            name="points"
+            type="number"
+            min={0}
+            max={999}
+            defaultValue={defaults?.points ?? 1}
+            className={INPUT_CLASS}
+          />
+        </Field>
+      </div>
+      <Field label="Description">
+        <textarea
+          name="description"
+          rows={2}
+          maxLength={2000}
+          defaultValue={defaults?.description ?? ""}
+          className={TEXTAREA_CLASS}
+          placeholder="Short blurb shown on the kiosk screen"
+        />
+      </Field>
+    </>
   );
 }
 

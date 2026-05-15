@@ -41,6 +41,14 @@ const schema = z.object({
     .optional()
     .or(z.literal(""))
     .transform((v) => (v ? v : null)),
+  points: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => (v ? Number.parseInt(v, 10) : 1))
+    .refine((n) => Number.isFinite(n) && n >= 0 && n <= 999, {
+      message: "Points must be 0–999",
+    }),
 });
 
 export async function createAccoladeTemplateAction(
@@ -59,6 +67,7 @@ export async function createAccoladeTemplateAction(
       emoji: parsed.data.emoji,
       themeId: parsed.data.themeId,
       eventId: parsed.data.eventId,
+      points: parsed.data.points,
     },
   });
   revalidatePath("/admin/accolades");
@@ -83,6 +92,7 @@ export async function updateAccoladeTemplateAction(
       emoji: parsed.data.emoji,
       themeId: parsed.data.themeId,
       eventId: parsed.data.eventId,
+      points: parsed.data.points,
     },
   });
   revalidatePath("/admin/accolades");

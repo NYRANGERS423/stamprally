@@ -83,6 +83,7 @@ export default async function AdminUserDetail({
         themeId: t.themeId,
         eventId: t.eventId,
         eventName: t.event?.name ?? null,
+        points: t.points,
       }))}
       events={events}
     />

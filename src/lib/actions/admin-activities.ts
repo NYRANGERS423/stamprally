@@ -26,6 +26,14 @@ const baseFields = z.object({
     .or(z.literal(""))
     .transform((v) => (v ? Number.parseInt(v, 10) : 0))
     .refine((n) => Number.isFinite(n), { message: "Order must be a number" }),
+  points: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => (v ? Number.parseInt(v, 10) : 1))
+    .refine((n) => Number.isFinite(n) && n >= 0 && n <= 999, {
+      message: "Points must be 0–999",
+    }),
 });
 
 function revalidate(eventId: string) {
@@ -50,6 +58,7 @@ export async function createActivityAction(
       name: parsed.data.name,
       description: parsed.data.description,
       order: parsed.data.order,
+      points: parsed.data.points,
       qrToken,
       fallbackCode,
     },
@@ -75,6 +84,7 @@ export async function updateActivityAction(
       name: parsed.data.name,
       description: parsed.data.description,
       order: parsed.data.order,
+      points: parsed.data.points,
     },
   });
   revalidate(eventId);

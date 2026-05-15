@@ -28,6 +28,7 @@ interface TemplateRow {
   themeId: string | null;
   eventId: string | null;
   event: { id: string; name: string } | null;
+  points: number;
   active: boolean;
 }
 
@@ -142,6 +143,12 @@ function TemplateRowItem({
           </p>
         )}
         <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-500 dark:text-stone-400">
+          <span>
+            Worth{" "}
+            <span className="font-mono text-stone-900 dark:text-stone-100">
+              {tpl.points} pt{tpl.points === 1 ? "" : "s"}
+            </span>
+          </span>
           <span>{themeName ? `Theme: ${themeName}` : "Theme: —"}</span>
           <span>
             {tpl.event ? `Event: ${tpl.event.name}` : "Standalone"}
@@ -244,7 +251,7 @@ function TemplateFields({
 }) {
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
+      <div className="grid gap-3 sm:grid-cols-[auto_1fr_auto]">
         <Field label="Emoji">
           <input
             name="emoji"
@@ -262,6 +269,16 @@ function TemplateFields({
             defaultValue={defaults?.label ?? ""}
             placeholder="Champion of the Day"
             className={INPUT_CLASS}
+          />
+        </Field>
+        <Field label="Points" hint="Leaderboard score">
+          <input
+            name="points"
+            type="number"
+            min={0}
+            max={999}
+            defaultValue={defaults?.points ?? 1}
+            className={INPUT_CLASS + " w-24 text-center"}
           />
         </Field>
       </div>

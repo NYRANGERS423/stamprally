@@ -70,6 +70,7 @@ interface TemplateOpt {
   themeId: string | null;
   eventId: string | null;
   eventName: string | null;
+  points: number;
 }
 
 interface EventOpt {
@@ -360,6 +361,9 @@ function AccoladesCard({
       t.themeId ?? "";
     (form.elements.namedItem("eventId") as HTMLSelectElement).value =
       t.eventId ?? "";
+    (form.elements.namedItem("points") as HTMLInputElement).value = String(
+      t.points,
+    );
   }
 
   return (
@@ -451,7 +455,7 @@ function AccoladesCard({
               className="mt-1 block w-full rounded-md border border-stone-300 bg-white px-3 py-2 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-stone-700 dark:bg-stone-900"
             />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
             <div>
               <label className="block text-xs font-medium text-stone-700 dark:text-stone-300">
                 Theme
@@ -485,6 +489,19 @@ function AccoladesCard({
                   </option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-stone-700 dark:text-stone-300">
+                Points
+              </label>
+              <input
+                name="points"
+                type="number"
+                min={0}
+                max={999}
+                defaultValue={1}
+                className={INPUT_CLASS + " mt-1 w-24 text-center"}
+              />
             </div>
           </div>
           {state.error && (

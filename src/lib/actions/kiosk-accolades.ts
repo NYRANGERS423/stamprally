@@ -46,6 +46,7 @@ export async function kioskGrantAccoladeAction(
       emoji: true,
       themeId: true,
       eventId: true,
+      points: true,
       active: true,
     },
   });
@@ -111,6 +112,7 @@ export async function kioskGrantAccoladeAction(
       emoji: tpl.emoji,
       themeId: tpl.themeId,
       eventId: tpl.eventId,
+      points: tpl.points,
       awardedBy: `kiosk:${username}`,
     },
   });
