@@ -40,8 +40,11 @@ yarn-error.log*
 prisma/*.db
 prisma/*.db-journal
 
-# personal Claude Code overrides
-.claude/settings.local.json
+# AI-tooling / agent files — local-only, never pushed
+# (they're already excluded from the Docker image via .dockerignore)
+/CLAUDE.md
+/AGENTS.md
+/.claude/
 CLAUDE.local.md
 *.local.md
 

@@ -1,6 +1,10 @@
-# Production stack. App listens on plain HTTP; reverse proxy terminates TLS.
-# The `migrate` service runs once on each `up`, applying any pending Prisma
-# migrations before the app boots.
+# Production stack — single self-contained app image.
+# Migrations are applied by the app's startup entrypoint, so there is no
+# separate `migrate` service.
+#
+# Data lives in bind mounts under ${DATA_DIR} so it's visible from the host
+# (and easy to back up). Defaults to ./data for local prod-like testing;
+# on Unraid, set DATA_DIR=/mnt/user/appdata/stamprally in .env.
 services:
   db:
     image: postgres:16-alpine
@@ -9,33 +13,22 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-stamprally}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required in production}
       POSTGRES_DB: ${POSTGRES_DB:-stamprally}
+      # Storing the data in a subdir lets the bind-mount root contain anything
+      # without confusing the Postgres init check.
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ${DATA_DIR:-./data}/db:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-stamprally}"]
       interval: 10s
       timeout: 5s
       retries: 10
 
-  migrate:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: builder
-    image: stamprally-migrate:latest
-    command: ["npx", "prisma", "migrate", "deploy"]
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-stamprally}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-stamprally}
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: "no"
-
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: stamprally:latest
+    # Pull a published image from GHCR by default. Override to `build: .`
+    # for a local build (e.g. when iterating on the Dockerfile).
+    image: ${APP_IMAGE:-ghcr.io/nyrangers423/stamprally:latest}
+    pull_policy: ${PULL_POLICY:-missing}
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -47,13 +40,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
     ports:
       - "${APP_PORT:-3000}:3000"
     volumes:
-      - uploads:/app/uploads
-
-volumes:
-  postgres_data:
-  uploads:
+      - ${DATA_DIR:-./data}/uploads:/app/uploads
