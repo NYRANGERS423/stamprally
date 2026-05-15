@@ -25,15 +25,16 @@ export default async function KioskActivities({
 
   return (
     <>
-      <KioskTopBar username={username} />
+      <KioskTopBar username={username} active="events" />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">
         <Link
           href="/kiosk"
-          className="inline-flex h-10 items-center rounded-md px-3 text-sm font-medium text-stone-600 hover:bg-stone-100 active:bg-stone-200 dark:text-stone-400 dark:hover:bg-stone-800"
+          className="inline-flex h-10 items-center gap-1.5 rounded-full border border-stone-300 bg-white px-4 text-sm font-medium text-stone-700 shadow-sm transition-colors hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
         >
-          ← All events
+          <BackArrow />
+          All events
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">
+        <h1 className="mt-3 text-2xl font-semibold tracking-tight">
           {event.name}
         </h1>
         <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
@@ -68,5 +69,24 @@ export default async function KioskActivities({
         )}
       </main>
     </>
+  );
+}
+
+function BackArrow() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <line x1="19" y1="12" x2="5" y2="12" />
+      <polyline points="12 19 5 12 12 5" />
+    </svg>
   );
 }

@@ -40,14 +40,15 @@ export default async function KioskShow({
 
   return (
     <>
-      <KioskTopBar username={username} />
+      <KioskTopBar username={username} active="events" />
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center px-4 py-6 sm:px-6">
         <div className="flex w-full items-center justify-between gap-3">
           <Link
             href={backHref}
-            className="inline-flex h-11 items-center rounded-md border border-stone-300 px-4 text-sm font-medium text-stone-700 hover:bg-stone-100 active:bg-stone-200 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
+            className="inline-flex h-10 items-center gap-1.5 rounded-full border border-stone-300 bg-white px-4 text-sm font-medium text-stone-700 shadow-sm transition-colors hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
           >
-            ← Change activity
+            <BackArrow />
+            Change activity
           </Link>
           <div className="text-right">
             <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-stone-500 dark:text-stone-400">
@@ -90,5 +91,24 @@ export default async function KioskShow({
         </div>
       </main>
     </>
+  );
+}
+
+function BackArrow() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <line x1="19" y1="12" x2="5" y2="12" />
+      <polyline points="12 19 5 12 12 5" />
+    </svg>
   );
 }
