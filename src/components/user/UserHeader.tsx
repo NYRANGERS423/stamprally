@@ -28,13 +28,11 @@ export function UserHeader({
       <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-1 px-3 py-2.5 sm:gap-2 sm:px-6">
         <Link
           href="/passport"
-          className="flex items-center gap-2 px-0.5 sm:px-1"
+          className="flex items-center gap-2 px-0.5 text-brand-700 sm:px-1 dark:text-brand-500"
           aria-label="Stamprally home"
         >
-          <span className="text-xl" aria-hidden>
-            🗽
-          </span>
-          <span className="hidden font-mono text-[11px] font-semibold uppercase tracking-[0.25em] text-brand-700 sm:inline dark:text-brand-500">
+          <PassportMark />
+          <span className="hidden font-mono text-[11px] font-semibold uppercase tracking-[0.25em] sm:inline">
             Stamprally
           </span>
         </Link>
@@ -91,5 +89,25 @@ export function UserHeader({
         </nav>
       </div>
     </header>
+  );
+}
+
+function PassportMark() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="5" y="3" width="14" height="18" rx="2" />
+      <circle cx="12" cy="10.5" r="2.75" />
+      <path d="M9 16.5h6" />
+    </svg>
   );
 }
