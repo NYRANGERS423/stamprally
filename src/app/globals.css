@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: every `dark:` utility applies when the root
+   <html> element has the `dark` class. A small inline script in
+   layout.tsx sets that class before paint based on the user's choice
+   (system / light / dark) so there's no flash of the wrong theme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --color-brand-50: #eff6ff;
   --color-brand-100: #dbeafe;

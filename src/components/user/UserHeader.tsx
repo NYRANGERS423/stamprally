@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { logoutAction } from "@/lib/actions/user-auth";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface NavItem {
   href: string;
@@ -60,8 +61,9 @@ export function UserHeader({
               </Link>
             );
           })}
+          <ThemeToggle className="ml-0.5 sm:ml-1" />
           {showLogout && (
-            <form action={logoutAction} className="ml-0.5 sm:ml-1">
+            <form action={logoutAction}>
               <button
                 type="submit"
                 className="inline-flex h-10 items-center justify-center rounded-md px-2 text-sm font-medium text-stone-500 hover:bg-stone-100 hover:text-stone-900 active:bg-stone-200 sm:px-3 dark:text-stone-500 dark:hover:bg-stone-800 dark:hover:text-stone-100"

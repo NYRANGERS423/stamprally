@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const NAV = [
   { href: "/admin", label: "Dashboard" },
@@ -60,7 +61,10 @@ export function AdminShell({
               Stamprally · Admin
             </span>
           </div>
-          {logoutForm}
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            {logoutForm}
+          </div>
         </div>
       </header>
 
