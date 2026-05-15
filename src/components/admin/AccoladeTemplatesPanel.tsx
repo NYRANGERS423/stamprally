@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useActionState, useState, useTransition } from "react";
 import {
   createAccoladeTemplateAction,
   deleteAccoladeTemplateAction,
   toggleAccoladeTemplateActiveAction,
+  updateAccoladeTemplateAction,
   type AccoladeTemplateFormState,
 } from "@/lib/actions/admin-accolade-templates";
 import { THEME_LIST } from "@/lib/themes";
@@ -14,6 +15,7 @@ import {
   DANGER_BTN,
   INPUT_CLASS,
   PRIMARY_BTN,
+  SECONDARY_BTN,
   SMALL_BTN,
   TEXTAREA_CLASS,
 } from "@/lib/ui";
@@ -65,60 +67,7 @@ export function AccoladeTemplatesPanel({
           <h2 className="text-sm font-medium">Add accolade</h2>
         </div>
         <form action={action} className="space-y-3 p-4">
-          <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
-            <Field label="Emoji">
-              <input
-                name="emoji"
-                maxLength={8}
-                placeholder="🏆"
-                className={INPUT_CLASS + " w-20 text-center text-lg"}
-              />
-            </Field>
-            <Field label="Label *">
-              <input
-                name="label"
-                required
-                maxLength={80}
-                placeholder="Champion of the Day"
-                className={INPUT_CLASS}
-              />
-            </Field>
-          </div>
-          <Field label="Description">
-            <textarea
-              name="description"
-              rows={2}
-              maxLength={240}
-              placeholder="Top stamper at the event."
-              className={TEXTAREA_CLASS}
-            />
-          </Field>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Theme" hint="Controls the chip colour on the passport">
-              <select
-                name="themeId"
-                defaultValue=""
-                className={INPUT_CLASS}
-              >
-                <option value="">— General (no theme) —</option>
-                {THEME_LIST.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.emoji} {t.label}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Tied to event" hint="Leave blank for general use">
-              <select name="eventId" defaultValue="" className={INPUT_CLASS}>
-                <option value="">— Standalone —</option>
-                {events.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          </div>
+          <TemplateFields events={events} />
           {state.error && (
             <p className="text-sm text-red-600 dark:text-red-400">
               {state.error}
@@ -148,7 +97,7 @@ export function AccoladeTemplatesPanel({
         ) : (
           <ul className="divide-y divide-stone-200 dark:divide-stone-800">
             {templates.map((t) => (
-              <TemplateRowItem key={t.id} tpl={t} />
+              <TemplateRowItem key={t.id} tpl={t} events={events} />
             ))}
           </ul>
         )}
@@ -157,8 +106,26 @@ export function AccoladeTemplatesPanel({
   );
 }
 
-function TemplateRowItem({ tpl }: { tpl: TemplateRow }) {
+function TemplateRowItem({
+  tpl,
+  events,
+}: {
+  tpl: TemplateRow;
+  events: EventOpt[];
+}) {
   const [pending, start] = useTransition();
+  const [editing, setEditing] = useState(false);
+  if (editing) {
+    return (
+      <li className="px-4 py-4">
+        <EditForm
+          tpl={tpl}
+          events={events}
+          onDone={() => setEditing(false)}
+        />
+      </li>
+    );
+  }
   const themeName =
     tpl.themeId &&
     (THEME_LIST.find((t) => t.id === tpl.themeId)?.label ?? tpl.themeId);
@@ -190,6 +157,14 @@ function TemplateRowItem({ tpl }: { tpl: TemplateRow }) {
         <button
           type="button"
           disabled={pending}
+          onClick={() => setEditing(true)}
+          className={SMALL_BTN}
+        >
+          Edit
+        </button>
+        <button
+          type="button"
+          disabled={pending}
           onClick={() =>
             start(async () => {
               await toggleAccoladeTemplateActiveAction(tpl.id, !tpl.active);
@@ -203,7 +178,11 @@ function TemplateRowItem({ tpl }: { tpl: TemplateRow }) {
           type="button"
           disabled={pending}
           onClick={() => {
-            if (!confirm(`Delete accolade "${tpl.label}"? Existing granted ones stay on user passports.`))
+            if (
+              !confirm(
+                `Delete accolade "${tpl.label}"? Existing granted ones stay on user passports.`,
+              )
+            )
               return;
             start(async () => {
               await deleteAccoladeTemplateAction(tpl.id);
@@ -215,6 +194,118 @@ function TemplateRowItem({ tpl }: { tpl: TemplateRow }) {
         </button>
       </div>
     </li>
+  );
+}
+
+function EditForm({
+  tpl,
+  events,
+  onDone,
+}: {
+  tpl: TemplateRow;
+  events: EventOpt[];
+  onDone: () => void;
+}) {
+  const boundUpdate = updateAccoladeTemplateAction.bind(null, tpl.id);
+  const [state, action, pending] = useActionState(boundUpdate, initial);
+  // When the update reports ok, exit edit mode on the next render.
+  if (state.ok) {
+    queueMicrotask(onDone);
+  }
+  return (
+    <form action={action} className="space-y-3">
+      <TemplateFields events={events} defaults={tpl} />
+      {state.error && (
+        <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <button type="submit" disabled={pending} className={PRIMARY_BTN}>
+          {pending ? "Saving…" : "Save changes"}
+        </button>
+        <button
+          type="button"
+          onClick={onDone}
+          disabled={pending}
+          className={SECONDARY_BTN}
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function TemplateFields({
+  events,
+  defaults,
+}: {
+  events: EventOpt[];
+  defaults?: TemplateRow;
+}) {
+  return (
+    <>
+      <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
+        <Field label="Emoji">
+          <input
+            name="emoji"
+            maxLength={8}
+            defaultValue={defaults?.emoji ?? ""}
+            placeholder="🏆"
+            className={INPUT_CLASS + " w-20 text-center text-lg"}
+          />
+        </Field>
+        <Field label="Label *">
+          <input
+            name="label"
+            required
+            maxLength={80}
+            defaultValue={defaults?.label ?? ""}
+            placeholder="Champion of the Day"
+            className={INPUT_CLASS}
+          />
+        </Field>
+      </div>
+      <Field label="Description">
+        <textarea
+          name="description"
+          rows={2}
+          maxLength={240}
+          defaultValue={defaults?.description ?? ""}
+          placeholder="Top stamper at the event."
+          className={TEXTAREA_CLASS}
+        />
+      </Field>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Theme" hint="Controls the chip colour on the passport">
+          <select
+            name="themeId"
+            defaultValue={defaults?.themeId ?? ""}
+            className={INPUT_CLASS}
+          >
+            <option value="">— General (no theme) —</option>
+            {THEME_LIST.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.emoji} {t.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Tied to event" hint="Leave blank for general use">
+          <select
+            name="eventId"
+            defaultValue={defaults?.eventId ?? ""}
+            className={INPUT_CLASS}
+          >
+            <option value="">— Standalone —</option>
+            {events.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+    </>
   );
 }
 
