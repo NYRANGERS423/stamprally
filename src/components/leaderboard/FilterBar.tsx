@@ -1,16 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { RangeOption } from "@/lib/leaderboard";
+import type { Board, RangeOption } from "@/lib/leaderboard";
 
 export function LeaderboardFilterBar({
   ranges,
   events,
+  selectedBoard,
   selectedRange,
   selectedEvent,
 }: {
   ranges: RangeOption[];
   events: Array<{ id: string; name: string; active: boolean }>;
+  selectedBoard: Board;
   selectedRange: string;
   selectedEvent: string;
 }) {
@@ -19,9 +21,11 @@ export function LeaderboardFilterBar({
   function setParam(which: "range" | "event", value: string) {
     const params = new URLSearchParams();
     const next = {
+      board: selectedBoard,
       range: which === "range" ? value : selectedRange,
       event: which === "event" ? value : selectedEvent,
     };
+    if (next.board !== "points") params.set("board", next.board);
     if (next.range !== "all") params.set("range", next.range);
     if (next.event !== "all") params.set("event", next.event);
     const qs = params.toString();

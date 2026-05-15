@@ -1,26 +1,35 @@
 import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUserSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { UserHeader } from "@/components/user/UserHeader";
 import { LeaderboardFilterBar } from "@/components/leaderboard/FilterBar";
 import {
+  BOARDS,
   fetchLeaderboard,
   findRange,
   getRangeOptions,
+  parseBoard,
+  type Board,
   type RankRow,
 } from "@/lib/leaderboard";
 
 export default async function LeaderboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ range?: string; event?: string }>;
+  searchParams: Promise<{
+    board?: string;
+    range?: string;
+    event?: string;
+  }>;
 }) {
   const session = await getUserSession();
   if (!session.userId) redirect("/login");
   if (session.mustChangePassword) redirect("/force-change-password");
 
   const params = await searchParams;
+  const board = parseBoard(params.board);
   const ranges = getRangeOptions();
   const range = findRange(params.range, ranges);
   const eventId =
@@ -39,6 +48,7 @@ export default async function LeaderboardPage({
     rangeStart: range.start,
     rangeEnd: range.end,
     eventId,
+    board,
     limit: 100,
   });
 
@@ -56,14 +66,20 @@ export default async function LeaderboardPage({
               Leaderboard
             </h1>
             <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
-              Top stampers and accolade-earners. Ranked by stamps, then
-              accolades.
+              {BOARDS.find((b) => b.key === board)?.hint}
             </p>
           </div>
+
+          <BoardSwitcher
+            active={board}
+            range={range.key}
+            event={params.event ?? "all"}
+          />
 
           <LeaderboardFilterBar
             ranges={ranges}
             events={events}
+            selectedBoard={board}
             selectedRange={range.key}
             selectedEvent={eventId ?? "all"}
           />
@@ -80,16 +96,6 @@ export default async function LeaderboardPage({
                 {rows.length === 100 ? "Top 100" : `${rows.length} ranked`}
               </span>
             </div>
-            <div className="grid grid-cols-[1.75rem_minmax(0,1fr)_2.75rem_2.75rem_2.5rem] items-center gap-2 border-b border-stone-200 bg-stone-50 px-4 py-2 text-[10px] font-medium uppercase tracking-wider text-stone-500 dark:border-stone-800 dark:bg-stone-950 dark:text-stone-400 sm:grid-cols-[2rem_2.5rem_minmax(0,1fr)_3.5rem_3.5rem_3.5rem] sm:gap-3">
-              <span>#</span>
-              <span className="hidden sm:block" aria-hidden></span>
-              <span>Name</span>
-              <span className="text-right">Stamps</span>
-              <span className="text-right" title="Accolades">
-                ★
-              </span>
-              <span className="text-right">Events</span>
-            </div>
             {rows.length === 0 ? (
               <p className="px-4 py-10 text-center text-sm text-stone-500 dark:text-stone-400">
                 Nothing to show for this filter yet.
@@ -101,6 +107,7 @@ export default async function LeaderboardPage({
                     key={row.userId}
                     rank={i + 1}
                     row={row}
+                    board={board}
                     isMe={row.userId === session.userId}
                   />
                 ))}
@@ -110,13 +117,12 @@ export default async function LeaderboardPage({
 
           {myIdx >= 0 ? (
             <p className="text-center text-xs text-stone-500 dark:text-stone-400">
-              You&apos;re #{myIdx + 1} with {rows[myIdx].stamps} stamps and{" "}
-              {rows[myIdx].accolades} accolades for this filter.
+              You&apos;re #{myIdx + 1} —{" "}
+              {primaryLabel(board, rows[myIdx])} on this board.
             </p>
           ) : (
             <p className="text-center text-xs text-stone-500 dark:text-stone-400">
-              You haven&apos;t earned anything in this filter yet — keep
-              stamping!
+              You haven&apos;t scored on this board in this filter yet.
             </p>
           )}
         </div>
@@ -125,19 +131,68 @@ export default async function LeaderboardPage({
   );
 }
 
+function BoardSwitcher({
+  active,
+  range,
+  event,
+}: {
+  active: Board;
+  range: string;
+  event: string;
+}) {
+  function href(board: Board): string {
+    const p = new URLSearchParams();
+    if (board !== "points") p.set("board", board);
+    if (range !== "all") p.set("range", range);
+    if (event !== "all") p.set("event", event);
+    const qs = p.toString();
+    return qs ? `/leaderboard?${qs}` : "/leaderboard";
+  }
+  return (
+    <div className="inline-flex w-full rounded-full bg-stone-100 p-1 dark:bg-stone-800/60">
+      {BOARDS.map((b) => {
+        const isActive = b.key === active;
+        return (
+          <Link
+            key={b.key}
+            href={href(b.key)}
+            scroll={false}
+            className={
+              "inline-flex h-10 flex-1 items-center justify-center rounded-full px-3 text-sm font-medium transition-colors " +
+              (isActive
+                ? "bg-white text-stone-900 shadow-sm dark:bg-stone-700 dark:text-stone-50"
+                : "text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100")
+            }
+          >
+            {b.label}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
 function RowItem({
   rank,
   row,
+  board,
   isMe,
 }: {
   rank: number;
   row: RankRow;
+  board: Board;
   isMe: boolean;
 }) {
+  const primary =
+    board === "points"
+      ? row.points
+      : board === "stamps"
+        ? row.stamps
+        : row.accolades;
   return (
     <li
       className={
-        "grid grid-cols-[1.75rem_minmax(0,1fr)_2.75rem_2.75rem_2.5rem] items-center gap-2 px-4 py-3 sm:grid-cols-[2rem_2.5rem_minmax(0,1fr)_3.5rem_3.5rem_3.5rem] sm:gap-3 " +
+        "grid grid-cols-[1.75rem_minmax(0,1fr)_3.5rem] items-center gap-2 px-4 py-3 sm:grid-cols-[2rem_2.5rem_minmax(0,1fr)_4rem] sm:gap-3 " +
         (isMe ? "bg-brand-50 dark:bg-brand-900/20" : "")
       }
     >
@@ -159,23 +214,38 @@ function RowItem({
           </div>
         )}
       </div>
-      <p className="min-w-0 truncate text-sm font-medium">
-        {row.firstName} {row.lastName}
-        {isMe && (
-          <span className="ml-1.5 text-xs font-normal text-brand-700 dark:text-brand-400">
-            you
-          </span>
-        )}
-      </p>
-      <span className="text-right font-mono text-sm font-semibold">
-        {row.stamps}
-      </span>
-      <span className="text-right font-mono text-sm font-semibold text-stamp-700 dark:text-stamp-500">
-        {row.accolades > 0 ? row.accolades : ""}
-      </span>
-      <span className="text-right font-mono text-xs text-stone-500 dark:text-stone-400">
-        {row.events > 0 ? row.events : ""}
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium">
+          {row.firstName} {row.lastName}
+          {isMe && (
+            <span className="ml-1.5 text-xs font-normal text-brand-700 dark:text-brand-400">
+              you
+            </span>
+          )}
+        </p>
+        <p className="mt-0.5 truncate text-[11px] text-stone-500 dark:text-stone-400">
+          {row.stamps} stamps · {row.accolades} ★ · {row.events} events
+        </p>
+      </div>
+      <span className="text-right font-mono text-base font-bold tabular-nums">
+        {primary}
+        <span className="ml-1 text-[10px] font-medium uppercase tracking-wider text-stone-500 dark:text-stone-400">
+          {boardUnit(board)}
+        </span>
       </span>
     </li>
   );
+}
+
+function primaryLabel(board: Board, row: RankRow): string {
+  if (board === "points") return `${row.points} pts`;
+  if (board === "stamps")
+    return `${row.stamps} stamp${row.stamps === 1 ? "" : "s"}`;
+  return `${row.accolades} accolade${row.accolades === 1 ? "" : "s"}`;
+}
+
+function boardUnit(board: Board): string {
+  if (board === "points") return "pts";
+  if (board === "stamps") return "stamps";
+  return "★";
 }
