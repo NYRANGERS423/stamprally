@@ -31,6 +31,7 @@ interface EventData {
   id: string;
   slug: string;
   name: string;
+  emoji: string | null;
   description: string | null;
   startDate: Date | null;
   endDate: Date | null;
@@ -138,6 +139,16 @@ export function EventDetailPanel({
                 defaultValue={event.slug}
                 maxLength={60}
                 className={INPUT_CLASS + " font-mono"}
+              />
+            </Field>
+            <Field label="Emoji" hint="Optional. Shown on event tiles.">
+              <input
+                name="emoji"
+                defaultValue={event.emoji ?? ""}
+                maxLength={8}
+                className={INPUT_CLASS + " text-center text-xl"}
+                placeholder="🎪"
+                autoComplete="off"
               />
             </Field>
             <Field label="Starts on">

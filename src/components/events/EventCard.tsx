@@ -16,6 +16,7 @@ import { EventStatus, type EventState } from "./EventStatus";
 export function EventCard({
   href,
   name,
+  emoji,
   state,
   startDate,
   myStamps,
@@ -24,6 +25,7 @@ export function EventCard({
 }: {
   href: string;
   name: string;
+  emoji?: string | null;
   state: EventState;
   startDate: Date | null;
   myStamps: number;
@@ -46,8 +48,8 @@ export function EventCard({
       className="group block rounded-2xl border border-stone-200 bg-white p-4 transition-shadow hover:shadow-md focus-visible:shadow-md dark:border-stone-800 dark:bg-stone-900"
     >
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-base text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
-          <span aria-hidden>🎪</span>
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-lg text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
+          <span aria-hidden>{emoji || "🎪"}</span>
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">

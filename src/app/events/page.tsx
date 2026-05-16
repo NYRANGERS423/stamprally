@@ -43,6 +43,7 @@ export default async function EventsListPage() {
     id: string;
     slug: string;
     name: string;
+    emoji: string | null;
     startDate: Date | null;
     state: EventState;
     myStamps: number;
@@ -57,6 +58,7 @@ export default async function EventsListPage() {
       id: e.id,
       slug: e.slug,
       name: e.name,
+      emoji: e.emoji,
       startDate: e.startDate,
       state,
       myStamps: myCount,
@@ -122,6 +124,7 @@ function Section({
     id: string;
     slug: string;
     name: string;
+    emoji: string | null;
     startDate: Date | null;
     state: EventState;
     myStamps: number;
@@ -141,6 +144,7 @@ function Section({
             <EventCard
               href={`/events/${e.slug}`}
               name={e.name}
+              emoji={e.emoji}
               state={e.state}
               startDate={e.startDate}
               myStamps={e.myStamps}

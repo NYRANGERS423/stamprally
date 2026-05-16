@@ -68,8 +68,13 @@ export default async function EventDetailPage({
             </svg>
             All events
           </Link>
-          <h1 className="mt-3 text-2xl font-semibold tracking-tight">
-            {event.name}
+          <h1 className="mt-3 flex items-center gap-2 text-2xl font-semibold tracking-tight">
+            {event.emoji && (
+              <span aria-hidden className="text-2xl">
+                {event.emoji}
+              </span>
+            )}
+            <span>{event.name}</span>
           </h1>
           {event.description && (
             <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">

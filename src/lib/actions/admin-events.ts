@@ -21,6 +21,17 @@ const optionalDate = z
     message: "Invalid date",
   });
 
+// Emoji is free-form so the admin can type whatever fits their event
+// from the system keyboard. We just trim and length-cap to keep it
+// from being abused; rendering happens as plain text.
+const optionalEmoji = z
+  .string()
+  .trim()
+  .max(8)
+  .optional()
+  .or(z.literal(""))
+  .transform((v) => (v ? v : null));
+
 const createSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
   slug: z
@@ -31,6 +42,7 @@ const createSchema = z.object({
     .regex(/^[a-z0-9-]*$/, "Slug can only contain lowercase letters, digits, and hyphens")
     .optional()
     .or(z.literal("")),
+  emoji: optionalEmoji,
   description: z
     .string()
     .trim()
@@ -58,6 +70,7 @@ export async function createEventAction(
       data: {
         name: parsed.data.name,
         slug,
+        emoji: parsed.data.emoji,
         description: parsed.data.description,
         startDate: parsed.data.startDate,
         endDate: parsed.data.endDate,
@@ -79,6 +92,7 @@ const updateSchema = z.object({
     .min(1, "Slug is required")
     .max(60)
     .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, digits, and hyphens"),
+  emoji: optionalEmoji,
   description: z
     .string()
     .trim()
@@ -106,6 +120,7 @@ export async function updateEventAction(
       data: {
         name: parsed.data.name,
         slug: parsed.data.slug,
+        emoji: parsed.data.emoji,
         description: parsed.data.description,
         startDate: parsed.data.startDate,
         endDate: parsed.data.endDate,

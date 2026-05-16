@@ -68,7 +68,7 @@ export default async function KioskHome() {
                   >
                     <div className="flex items-start gap-3">
                       <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-xl bg-brand-50 text-2xl text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
-                        <span aria-hidden>🎪</span>
+                        <span aria-hidden>{event.emoji || "🎪"}</span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">

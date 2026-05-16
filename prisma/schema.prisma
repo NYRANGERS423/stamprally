@@ -160,6 +160,7 @@ model Event {
   id                 String             @id @default(cuid())
   slug               String             @unique
   name               String
+  emoji              String?
   description        String?            @db.Text
   startDate          DateTime?
   endDate            DateTime?

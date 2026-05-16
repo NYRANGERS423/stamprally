@@ -5,6 +5,7 @@ const KEYS = {
   uploadMaxMb: "upload.max_mb",
   uploadOutputPx: "upload.output_px",
   uploadOutputQuality: "upload.output_quality",
+  siteTitle: "site.title",
 } as const;
 
 export interface PhotoSettings {
@@ -79,4 +80,29 @@ function numFromConfig(
 
 function clamp(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
+}
+
+// ── Sitewide custom title ──────────────────────────────────────────────────
+// Optional centered header title that admins can set from the admin
+// Settings page. Returns null when no title has been configured; the
+// header falls back to the default "Stamprally" wordmark in that case.
+export async function getSiteTitle(): Promise<string | null> {
+  const row = await db.appConfig.findUnique({
+    where: { key: KEYS.siteTitle },
+  });
+  const raw = row?.value?.trim();
+  return raw ? raw : null;
+}
+
+export async function setSiteTitle(value: string | null): Promise<void> {
+  const trimmed = (value ?? "").trim().slice(0, 80);
+  if (!trimmed) {
+    await db.appConfig.deleteMany({ where: { key: KEYS.siteTitle } });
+    return;
+  }
+  await db.appConfig.upsert({
+    where: { key: KEYS.siteTitle },
+    update: { value: trimmed },
+    create: { key: KEYS.siteTitle, value: trimmed },
+  });
 }

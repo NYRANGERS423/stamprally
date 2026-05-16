@@ -20,6 +20,7 @@ interface EventRow {
   id: string;
   slug: string;
   name: string;
+  emoji: string | null;
   description: string | null;
   startDate: Date | null;
   endDate: Date | null;
@@ -54,6 +55,15 @@ export function EventsPanel({ events }: { events: EventRow[] }) {
                 required
                 maxLength={120}
                 className={INPUT_CLASS}
+              />
+            </Field>
+            <Field label="Emoji" hint="Optional. Shown on event tiles.">
+              <input
+                name="emoji"
+                maxLength={8}
+                className={INPUT_CLASS + " text-center text-xl"}
+                placeholder="🎪"
+                autoComplete="off"
               />
             </Field>
             <Field label="Slug" hint="Leave blank to auto-generate">
