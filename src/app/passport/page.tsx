@@ -99,7 +99,7 @@ export default async function PassportPage({
 
   return (
     <>
-      <UserHeader active="passport" />
+      <UserHeader />
       {flashMode && (
         <StampedFlash mode={flashMode} activityName={flashName} />
       )}

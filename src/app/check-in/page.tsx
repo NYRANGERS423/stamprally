@@ -12,7 +12,7 @@ export default async function CheckInLanding() {
 
   return (
     <>
-      <UserHeader active="stamp" />
+      <UserHeader />
       <main className="flex flex-1 flex-col items-start justify-start px-4 py-6 sm:px-6 sm:py-8">
         <div className="mx-auto w-full max-w-sm space-y-4">
           {/* Context strip — only renders when an event is live today. */}

@@ -40,7 +40,7 @@ export default async function KioskShow({
 
   return (
     <>
-      <KioskTopBar username={username} active="events" />
+      <KioskTopBar username={username} />
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center px-4 py-6 sm:px-6">
         <div className="flex w-full items-center justify-between gap-3">
           <Link

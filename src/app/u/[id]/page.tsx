@@ -87,7 +87,7 @@ export default async function UserPassportPage({
 
   return (
     <>
-      <UserHeader active="leaderboard" />
+      <UserHeader />
       <main className="flex flex-1 flex-col items-center px-4 py-6 sm:px-6 sm:py-10">
         <div className="w-full max-w-md">
           <div className="mb-4">

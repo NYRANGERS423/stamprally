@@ -32,7 +32,7 @@ export default async function EditPassportPage() {
 
   return (
     <>
-      <UserHeader active="edit" />
+      <UserHeader />
       <main className="flex flex-1 flex-col items-center px-4 py-6 sm:px-6 sm:py-10">
         <div className="w-full max-w-2xl space-y-8">
         <div>

@@ -66,7 +66,7 @@ export default async function LeaderboardPage({
 
   return (
     <>
-      <UserHeader active="leaderboard" />
+      <UserHeader />
       <main className="flex flex-1 flex-col items-center px-4 py-6 sm:px-6 sm:py-8">
         <div className="w-full max-w-3xl space-y-4">
           <div>
