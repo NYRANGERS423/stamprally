@@ -178,6 +178,9 @@ model Activity {
   event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   name         String
   description  String?  @db.Text
+  location     String?
+  startTime    DateTime?
+  endTime      DateTime?
   order        Int      @default(0)
   points       Int      @default(1)
   qrToken      String   @unique

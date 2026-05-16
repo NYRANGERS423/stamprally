@@ -11,6 +11,18 @@ export interface ActivityFormState {
   ok?: boolean;
 }
 
+// `datetime-local` inputs hand back YYYY-MM-DDTHH:MM (no timezone),
+// which `new Date()` interprets as local time. That matches what the
+// admin saw when typing it; we just store the resulting UTC instant.
+const optionalDateTime = z
+  .string()
+  .optional()
+  .or(z.literal(""))
+  .transform((v) => (v ? new Date(v) : null))
+  .refine((d) => d == null || !Number.isNaN(d.getTime()), {
+    message: "Invalid date/time",
+  });
+
 const baseFields = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
   description: z
@@ -20,6 +32,15 @@ const baseFields = z.object({
     .optional()
     .or(z.literal(""))
     .transform((v) => (v ? v : null)),
+  location: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => (v ? v : null)),
+  startTime: optionalDateTime,
+  endTime: optionalDateTime,
   order: z
     .string()
     .optional()
@@ -57,6 +78,9 @@ export async function createActivityAction(
       eventId,
       name: parsed.data.name,
       description: parsed.data.description,
+      location: parsed.data.location,
+      startTime: parsed.data.startTime,
+      endTime: parsed.data.endTime,
       order: parsed.data.order,
       points: parsed.data.points,
       qrToken,
@@ -83,6 +107,9 @@ export async function updateActivityAction(
     data: {
       name: parsed.data.name,
       description: parsed.data.description,
+      location: parsed.data.location,
+      startTime: parsed.data.startTime,
+      endTime: parsed.data.endTime,
       order: parsed.data.order,
       points: parsed.data.points,
     },

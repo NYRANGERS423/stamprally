@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth/user-guard";
 import { db } from "@/lib/db";
 import { UserHeader } from "@/components/user/UserHeader";
 import { RankRow } from "@/components/leaderboard/RankRow";
+import { ActivityList } from "@/components/events/ActivityList";
 import { fetchLeaderboard } from "@/lib/leaderboard";
 
 export default async function EventDetailPage({
@@ -20,7 +21,15 @@ export default async function EventDetailPage({
       activities: {
         where: { active: true },
         orderBy: [{ order: "asc" }, { createdAt: "asc" }],
-        select: { id: true, name: true },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          location: true,
+          startTime: true,
+          endTime: true,
+          points: true,
+        },
       },
     },
   });
@@ -101,25 +110,20 @@ export default async function EventDetailPage({
               }}
             />
           </div>
-          <ul className="mt-5 flex flex-wrap gap-1.5">
-            {event.activities.map((a) => {
-              const done = myStampedActivityIds.has(a.id);
-              return (
-                <li
-                  key={a.id}
-                  className={
-                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs " +
-                    (done
-                      ? "border-stamp-600 bg-stamp-50 text-stamp-700 dark:border-stamp-500 dark:bg-stamp-600/20 dark:text-stamp-500"
-                      : "border-stone-300 text-stone-500 dark:border-stone-700 dark:text-stone-400")
-                  }
-                >
-                  {done ? <CheckDot /> : <EmptyDot />}
-                  {a.name}
-                </li>
-              );
-            })}
-          </ul>
+          <div className="mt-5">
+            <ActivityList
+              activities={event.activities.map((a) => ({
+                id: a.id,
+                name: a.name,
+                description: a.description,
+                location: a.location,
+                startTime: a.startTime,
+                endTime: a.endTime,
+                points: a.points,
+                done: myStampedActivityIds.has(a.id),
+              }))}
+            />
+          </div>
         </section>
 
         <section className="rounded-2xl border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900">
@@ -156,16 +160,3 @@ export default async function EventDetailPage({
   );
 }
 
-function CheckDot() {
-  return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 12l5 5L20 7" />
-    </svg>
-  );
-}
-
-function EmptyDot() {
-  return (
-    <span className="inline-block h-2 w-2 rounded-full border border-current" />
-  );
-}

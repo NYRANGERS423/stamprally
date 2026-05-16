@@ -42,6 +42,9 @@ interface ActivityData {
   id: string;
   name: string;
   description: string | null;
+  location: string | null;
+  startTime: Date | null;
+  endTime: Date | null;
   order: number;
   points: number;
   qrToken: string;
@@ -444,8 +447,42 @@ function ActivityFields({
           placeholder="Short blurb shown on the kiosk screen"
         />
       </Field>
+      <Field label="Location" hint="Optional. Shown on the activity tile.">
+        <input
+          name="location"
+          maxLength={200}
+          defaultValue={defaults?.location ?? ""}
+          className={INPUT_CLASS}
+          placeholder="Lobby · Booth 4"
+        />
+      </Field>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Starts" hint="Local time. Optional.">
+          <input
+            name="startTime"
+            type="datetime-local"
+            defaultValue={dateTimeLocal(defaults?.startTime ?? null)}
+            className={INPUT_CLASS}
+          />
+        </Field>
+        <Field label="Ends" hint="Local time. Optional.">
+          <input
+            name="endTime"
+            type="datetime-local"
+            defaultValue={dateTimeLocal(defaults?.endTime ?? null)}
+            className={INPUT_CLASS}
+          />
+        </Field>
+      </div>
     </>
   );
+}
+
+function dateTimeLocal(d: Date | null): string {
+  if (!d) return "";
+  // datetime-local wants YYYY-MM-DDTHH:MM in *local* time (no zone).
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function Field({
