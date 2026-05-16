@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { Board, RankRow as RankRowData } from "@/lib/leaderboard";
+import { boardValue, type Board, type RankRow as RankRowData } from "@/lib/leaderboard";
 
 // Pass 03 / design-handoff §4.3.1 — single leaderboard row.
 // Rank number is mono + tabular. Top-3 ranks get a tinted ring (gold /
@@ -20,12 +20,7 @@ export function RankRow({
   board: Board;
   isMe: boolean;
 }) {
-  const primary =
-    board === "points"
-      ? row.points
-      : board === "stamps"
-        ? row.stamps
-        : row.accolades;
+  const primary = boardValue(row, board);
 
   const youClasses = isMe
     ? "bg-brand-50 ring-1 ring-brand-200 dark:bg-brand-900/30 dark:ring-brand-700"
@@ -55,7 +50,7 @@ export function RankRow({
           {row.stamps} stamps · {row.accolades} ★ · {row.events} events
         </p>
       </div>
-      <PrimaryMetric value={primary} board={board} />
+      <PrimaryMetric value={primary} />
     </li>
   );
 }
@@ -112,12 +107,12 @@ function YouPill() {
   );
 }
 
-function PrimaryMetric({ value, board }: { value: number; board: Board }) {
+function PrimaryMetric({ value }: { value: number }) {
   return (
     <span className="font-serif text-2xl font-medium tabular-nums text-stone-900 dark:text-stone-100">
       {value}
       <span className="ml-1 font-mono text-[10px] font-medium uppercase tracking-wider text-stone-500 dark:text-stone-400">
-        {board === "points" ? "pts" : board === "stamps" ? "stamps" : "★"}
+        pts
       </span>
     </span>
   );

@@ -74,6 +74,37 @@ export default async function LeaderboardPage({
             <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
               {BOARDS.find((b) => b.key === board)?.hint}
             </p>
+            <details className="mt-2 text-xs text-stone-500 dark:text-stone-400">
+              <summary className="cursor-pointer select-none rounded px-1 py-0.5 hover:text-stone-700 hover:underline dark:hover:text-stone-200">
+                How are points calculated?
+              </summary>
+              <div className="mt-2 space-y-1.5 px-1">
+                <p>
+                  <strong className="text-stone-700 dark:text-stone-300">
+                    Overall
+                  </strong>{" "}
+                  combines your stamp points and accolade points into one
+                  total — it&apos;s the headline ranking.
+                </p>
+                <p>
+                  <strong className="text-stone-700 dark:text-stone-300">
+                    Stamp pts
+                  </strong>{" "}
+                  is just the points from stamps you&apos;ve collected (each
+                  activity has its own point value, set by an admin).
+                </p>
+                <p>
+                  <strong className="text-stone-700 dark:text-stone-300">
+                    Accolade pts
+                  </strong>{" "}
+                  is just the points from accolades you&apos;ve been awarded.
+                </p>
+                <p>
+                  Counts (stamps, ★, events) still appear under each name as
+                  a breakdown, but every board ranks by points.
+                </p>
+              </div>
+            </details>
           </div>
 
           <div className="flex justify-center sm:justify-start">

@@ -10,10 +10,28 @@ export interface RangeOption {
 
 export type Board = "points" | "stamps" | "accolades";
 
+// All three boards rank by POINTS (per fix-list 2026-05-16):
+// - points    : total = stampPoints + accoladePoints
+// - stamps    : stampPoints only (sum of activity.points)
+// - accolades : accoladePoints only (sum of accolade.points)
+// Counts are still surfaced in the secondary stat strip so users can
+// see how their points break down.
 export const BOARDS: Array<{ key: Board; label: string; hint: string }> = [
-  { key: "points", label: "Points", hint: "Stamp + accolade points combined" },
-  { key: "stamps", label: "Stamps", hint: "Most stamps collected" },
-  { key: "accolades", label: "Accolades", hint: "Most accolades earned" },
+  {
+    key: "points",
+    label: "Overall",
+    hint: "Combined stamp points + accolade points.",
+  },
+  {
+    key: "stamps",
+    label: "Stamp pts",
+    hint: "Just the points from stamps you've collected.",
+  },
+  {
+    key: "accolades",
+    label: "Accolade pts",
+    hint: "Just the points from accolades you've been awarded.",
+  },
 ];
 
 export function parseBoard(input: string | undefined): Board {
@@ -29,7 +47,9 @@ export interface RankRow {
   stamps: number;
   accolades: number;
   events: number;
-  points: number;
+  stampPoints: number;
+  accoladePoints: number;
+  points: number; // stampPoints + accoladePoints
 }
 
 export function getRangeOptions(now: Date = new Date()): RangeOption[] {
@@ -78,6 +98,12 @@ export function findRange(
   return opts.find((o) => o.key === key) ?? opts[0];
 }
 
+export function boardValue(row: RankRow, board: Board): number {
+  if (board === "points") return row.points;
+  if (board === "stamps") return row.stampPoints;
+  return row.accoladePoints;
+}
+
 export async function fetchLeaderboard({
   rangeStart,
   rangeEnd,
@@ -108,7 +134,12 @@ export async function fetchLeaderboard({
     ...(eventId ? { eventId } : {}),
   };
 
-  const [stampDetails, accoladeGroups] = await Promise.all([
+  // Fetch every user so 0-pts folks still appear in the ranks (so they
+  // can see themselves "at the bottom") — per the 2026-05-16 fix list.
+  // For deployments larger than the limit, the slice still trims at
+  // the bottom; the YouFooter handles surfacing the session user when
+  // they fall outside.
+  const [stampDetails, accoladeGroups, allUsers] = await Promise.all([
     db.stamp.findMany({
       where: stampWhere,
       select: {
@@ -122,9 +153,16 @@ export async function fetchLeaderboard({
       _count: { _all: true },
       _sum: { points: true },
     }),
+    db.user.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        photoPath: true,
+      },
+    }),
   ]);
 
-  // Aggregate stamps per user (count + sum of activity.points + distinct events).
   interface StampAgg {
     stamps: number;
     points: number;
@@ -145,28 +183,14 @@ export async function fetchLeaderboard({
   const accoladeCount = new Map(
     accoladeGroups.map((g) => [g.userId, g._count._all]),
   );
-  const accoladePoints = new Map(
+  const accoladePointsMap = new Map(
     accoladeGroups.map((g) => [g.userId, g._sum.points ?? 0]),
   );
 
-  const userIds = new Set<string>([
-    ...perUser.keys(),
-    ...accoladeGroups.map((g) => g.userId),
-  ]);
-  if (userIds.size === 0) return [];
-
-  const users = await db.user.findMany({
-    where: { id: { in: Array.from(userIds) } },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      photoPath: true,
-    },
-  });
-
-  const rows: RankRow[] = users.map((u) => {
+  const rows: RankRow[] = allUsers.map((u) => {
     const sa = perUser.get(u.id);
+    const stampPoints = sa?.points ?? 0;
+    const accoladePoints = accoladePointsMap.get(u.id) ?? 0;
     return {
       userId: u.id,
       firstName: u.firstName,
@@ -175,44 +199,24 @@ export async function fetchLeaderboard({
       stamps: sa?.stamps ?? 0,
       accolades: accoladeCount.get(u.id) ?? 0,
       events: sa?.eventsSet.size ?? 0,
-      points: (sa?.points ?? 0) + (accoladePoints.get(u.id) ?? 0),
+      stampPoints,
+      accoladePoints,
+      points: stampPoints + accoladePoints,
     };
   });
 
-  // Sort by chosen board, with stable tiebreakers across boards.
+  // Sort by chosen board's points metric, with consistent tiebreakers.
   rows.sort((a, b) => {
-    if (board === "points") {
-      return (
-        b.points - a.points ||
-        b.stamps - a.stamps ||
-        b.accolades - a.accolades ||
-        a.lastName.localeCompare(b.lastName)
-      );
-    }
-    if (board === "stamps") {
-      return (
-        b.stamps - a.stamps ||
-        b.points - a.points ||
-        b.accolades - a.accolades ||
-        a.lastName.localeCompare(b.lastName)
-      );
-    }
-    // accolades
+    const primary = boardValue(b, board) - boardValue(a, board);
+    if (primary !== 0) return primary;
+    // Tiebreak: overall points → stamps count → accolades count → name.
     return (
-      b.accolades - a.accolades ||
       b.points - a.points ||
       b.stamps - a.stamps ||
+      b.accolades - a.accolades ||
       a.lastName.localeCompare(b.lastName)
     );
   });
 
-  // Drop rows that score 0 on the active board so the page isn't padded
-  // with everyone who's ever stamped but has no entries in this range.
-  const filtered = rows.filter((r) => {
-    if (board === "points") return r.points > 0;
-    if (board === "stamps") return r.stamps > 0;
-    return r.accolades > 0;
-  });
-
-  return filtered.slice(0, limit);
+  return rows.slice(0, limit);
 }

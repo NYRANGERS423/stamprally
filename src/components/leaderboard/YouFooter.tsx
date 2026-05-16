@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import type { Board, RankRow as RankRowData } from "@/lib/leaderboard";
+import { boardValue, type Board, type RankRow as RankRowData } from "@/lib/leaderboard";
 
 // Pass 03 / design-handoff §4.3.1 — sticky footer that pins the
 // current user's row when their actual row scrolls off-screen.
@@ -37,13 +37,8 @@ export function YouFooter({
 
   if (!visible) return null;
 
-  const primary =
-    board === "points"
-      ? myRow.points
-      : board === "stamps"
-        ? myRow.stamps
-        : myRow.accolades;
-  const unit = board === "points" ? "pts" : board === "stamps" ? "stamps" : "★";
+  const primary = boardValue(myRow, board);
+  const unit = "pts";
 
   return (
     <div

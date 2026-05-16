@@ -1,19 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/user-guard";
 import { db } from "@/lib/db";
 import { UserHeader } from "@/components/user/UserHeader";
-
-interface LeaderboardEntry {
-  rank: number;
-  userId: string;
-  firstName: string;
-  lastName: string;
-  photoPath: string | null;
-  stamps: number;
-  accolades: number;
-}
+import { RankRow } from "@/components/leaderboard/RankRow";
+import { fetchLeaderboard } from "@/lib/leaderboard";
 
 export default async function EventDetailPage({
   params,
@@ -37,60 +28,17 @@ export default async function EventDetailPage({
 
   const allActivityIds = event.activities.map((a) => a.id);
 
-  const [myStamps, leaderboardRaw, accoladeRaw] = await Promise.all([
+  const [myStamps, eventLeaderboard] = await Promise.all([
     db.stamp.findMany({
       where: { userId, activityId: { in: allActivityIds } },
       select: { activityId: true },
     }),
-    db.stamp.groupBy({
-      by: ["userId"],
-      where: { activityId: { in: allActivityIds } },
-      _count: { _all: true },
-      orderBy: { _count: { userId: "desc" } },
-      take: 50,
-    }),
-    db.accolade.groupBy({
-      by: ["userId"],
-      where: { eventId: event.id },
-      _count: { _all: true },
-    }),
+    // Mini-leaderboard: top 5 by overall event points (stamp points +
+    // accolade points scoped to this event). Same ranking shape as the
+    // global /rank page (per fix-list 2026-05-16).
+    fetchLeaderboard({ eventId: event.id, board: "points", limit: 5 }),
   ]);
   const myStampedActivityIds = new Set(myStamps.map((s) => s.activityId));
-  const accoladeCountByUser = new Map(
-    accoladeRaw.map((r) => [r.userId, r._count._all]),
-  );
-
-  const leaderboardUserIds = leaderboardRaw.map((r) => r.userId);
-  const leaderboardUsers = leaderboardUserIds.length
-    ? await db.user.findMany({
-        where: { id: { in: leaderboardUserIds } },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          photoPath: true,
-        },
-      })
-    : [];
-  const userById = new Map(leaderboardUsers.map((u) => [u.id, u]));
-
-  const leaderboard: LeaderboardEntry[] = leaderboardRaw
-    .map((r, i) => {
-      const u = userById.get(r.userId);
-      if (!u) return null;
-      return {
-        rank: i + 1,
-        userId: r.userId,
-        firstName: u.firstName,
-        lastName: u.lastName,
-        photoPath: u.photoPath,
-        stamps: r._count._all,
-        accolades: accoladeCountByUser.get(r.userId) ?? 0,
-      };
-    })
-    .filter((x): x is LeaderboardEntry => x !== null);
-
-  const myEntry = leaderboard.find((e) => e.userId === userId) ?? null;
   const totalActive = allActivityIds.length;
   const myStampedCount = myStampedActivityIds.size;
 
@@ -169,81 +117,34 @@ export default async function EventDetailPage({
           </ul>
         </section>
 
-        <section className="rounded-xl border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900">
+        <section className="rounded-2xl border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900">
           <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3 dark:border-stone-800">
             <h2 className="text-sm font-medium">Rank</h2>
-            <span className="text-xs text-stone-500 dark:text-stone-400">
-              Top {leaderboard.length}
-            </span>
+            <Link
+              href={`/leaderboard?event=${event.id}`}
+              className="text-xs text-stone-500 hover:text-stone-700 hover:underline dark:text-stone-400 dark:hover:text-stone-200"
+            >
+              All ranks →
+            </Link>
           </div>
-          {leaderboard.length === 0 ? (
+          {eventLeaderboard.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm text-stone-500 dark:text-stone-400">
               No stamps yet — be the first!
             </p>
           ) : (
-            <ol className="divide-y divide-stone-200 dark:divide-stone-800">
-              {leaderboard.map((entry) => {
-                const isMe = entry.userId === userId;
-                return (
-                  <li
-                    key={entry.userId}
-                    className={
-                      "flex items-center gap-3 px-4 py-3 " +
-                      (isMe ? "bg-brand-50 dark:bg-brand-900/20" : "")
-                    }
-                  >
-                    <span className="w-7 shrink-0 font-mono text-sm text-stone-500 dark:text-stone-400">
-                      {entry.rank}
-                    </span>
-                    <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-stone-200 dark:bg-stone-800">
-                      {entry.photoPath ? (
-                        <Image
-                          src={`/api/uploads/${entry.photoPath}`}
-                          alt=""
-                          fill
-                          sizes="36px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs text-stone-400">
-                          {entry.firstName[0]}
-                        </div>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
-                        {entry.firstName} {entry.lastName}
-                        {isMe && (
-                          <span className="ml-1.5 text-xs font-normal text-brand-700 dark:text-brand-400">
-                            you
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                    {entry.accolades > 0 && (
-                      <span
-                        className="inline-flex items-center gap-0.5 font-mono text-xs font-semibold text-stamp-700 dark:text-stamp-500"
-                        title={`${entry.accolades} accolade${entry.accolades === 1 ? "" : "s"} for this event`}
-                      >
-                        <span aria-hidden>★</span>
-                        {entry.accolades}
-                      </span>
-                    )}
-                    <span className="font-mono text-sm font-semibold">
-                      {entry.stamps}
-                    </span>
-                  </li>
-                );
-              })}
+            <ol className="flex flex-col gap-1 p-2">
+              {eventLeaderboard.map((row, i) => (
+                <RankRow
+                  key={row.userId}
+                  rank={i + 1}
+                  row={row}
+                  board="points"
+                  isMe={row.userId === userId}
+                />
+              ))}
             </ol>
           )}
         </section>
-
-        {myEntry && myEntry.rank > 10 && (
-          <p className="text-center text-xs text-stone-500 dark:text-stone-400">
-            You&apos;re #{myEntry.rank} with {myEntry.stamps} stamps. Keep going!
-          </p>
-        )}
         </div>
       </main>
     </>
