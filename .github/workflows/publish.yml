@@ -2,7 +2,8 @@ name: Build and publish image
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
+    tags: ["v*"]
   workflow_dispatch: {}
 
 concurrency:
@@ -34,7 +35,14 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
+            # Stable channel: every push to main → :latest
             type=raw,value=latest,enable={{is_default_branch}}
+            # Dev / preview channel: every push to dev → :dev
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
+            # Versioned snapshots: pushing a vX.Y.Z git tag → :vX.Y.Z and :vX.Y
+            type=semver,pattern=v{{version}}
+            type=semver,pattern=v{{major}}.{{minor}}
+            # Immutable per-commit pin, always built
             type=sha,format=short
 
       - name: Build and push

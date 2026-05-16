@@ -42,12 +42,15 @@ docker compose down -v                 # nuke data too
 
 ## Production image
 
-Every push to `main` triggers [GitHub Actions](.github/workflows/publish.yml) to build a single combined image and publish it to **GHCR**:
+[GitHub Actions](.github/workflows/publish.yml) builds a single combined image and publishes it to **GHCR**. Three channels:
 
-```
-ghcr.io/nyrangers423/stamprally:latest
-ghcr.io/nyrangers423/stamprally:sha-<short-commit>
-```
+| Trigger | Image tag(s) | When to use |
+|---|---|---|
+| Push to `main` | `:latest`, `:sha-<short>` | Stable / production. What Unraid pulls by default. |
+| Push to `dev` | `:dev`, `:sha-<short>` | Testing in-progress changes without touching `:latest`. Switch Unraid to `:dev` to try it. |
+| Push of a `vX.Y.Z` git tag | `:vX.Y.Z`, `:vX.Y`, `:sha-<short>` | Immutable version snapshots — pin Unraid to one if you ever need to roll back to a known-good build. |
+
+The `:sha-<short>` tag is built on every push regardless of trigger, so any commit can be pulled exactly even if it never got a friendly name.
 
 The image **bundles Postgres 16 and the Stamprally Next.js app together** in one container. On start, an entrypoint script:
 1. Starts Postgres in the background
