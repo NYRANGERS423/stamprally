@@ -10,7 +10,7 @@ Internal "fake passport" web app where company employees create a profile (their
 
 - **User / Traveller** — employee with a passport
 - **Admin** — designated administrator(s); env-var login; full override on any data
-- **Kiosk** — shared account logged in on event-day check-in stations; admin-managed in DB; multi-device concurrent login allowed
+- **Steward** — a regular User who an admin has temporarily promoted (via `/admin/stewards`) to run events on their own device: display activity QRs and grant accolades. Grants carry optional expiration and per-permission flags (`canStamp`, `canGrantAccolades`). The Steward menu appears in the user's hamburger only while their grant is active. Replaces the v1.2 "Kiosk" shared-account model.
 
 ## Domain model
 
@@ -35,7 +35,7 @@ count-based stamps and accolades boards.
 - **User auth**: email + password; argon2id hashing
 - **Password reset (no SMTP)**: admin sets a default password and flips `mustChangePassword=true`; user is forced to change it on next login before accessing anything else
 - **Admin auth**: env vars `ADMIN_USERNAME` / `ADMIN_PASSWORD`
-- **Kiosk auth**: DB-managed user; admin creates the credentials; concurrent multi-device login allowed
+- **Steward auth**: regular user session — no separate login. Admin grants steward access at `/admin/stewards` via the `StewardGrant` model (newest non-revoked, non-expired row = active). Grants record `grantedByAdmin`, `grantedAt`, optional `expiresAt`, `revokedAt`/`revokedReason`, and the `canStamp` / `canGrantAccolades` permission flags. The full table doubles as the audit trail.
 
 ### Passport profile
 
@@ -66,9 +66,13 @@ Admin can override **all** fields on any profile.
 ### Events & activities (admin-managed)
 
 - CRUD: Event → Activity (flat — no intermediate Destination layer)
+- Event has optional `emoji` (admin-editable, surfaces on events list, event detail hero, and steward picker)
+- Activity has optional `location`, `startTime`, `endTime` surfaced on the user-facing clickable activity sheet
 - Each Activity has a unique long QR token + short fallback code (4 digits)
 - Each Activity has a `points` value (admin-editable, default 1) that feeds the points leaderboard
 - Activity can be active / inactive
+- Events list is grouped by lifecycle on `/events`: **Happening now / Coming up / Past** with state pills (today / soon / upcoming / closed / done)
+- Per-event "stamped by N" social count surfaces on the event card when N ≥ 5
 
 ### Check-in flow
 
@@ -77,34 +81,37 @@ Admin can override **all** fields on any profile.
 - OR enters fallback 4-digit code manually
 - Stamp recorded; passport refreshes; toast shows the new stamp
 
-### Kiosk UI
+### Steward UI
 
-- Logged-in kiosk picks: Event → Activity → renders large QR + fallback code on screen
-- "Give accolade" flow: kiosk picks an accolade from the catalog, then scans each user's passport QR (or types their 6-character code) to grant it. Rapid-fire scanner for handing accolades to a whole group quickly.
-- Stays on the chosen surface until the kiosk operator navigates elsewhere
+- Lives at `/steward/*`. Available only to users with an active `StewardGrant`. The `Steward` entry appears in the standard user hamburger automatically.
+- Landing page picks **Stamps** or **Accolades**. Cards grey out for permissions the user wasn't granted.
+- Stamps flow: pick Event → pick Activity → render large QR + 4-digit fallback code on the steward's own screen for recipients to scan.
+- Accolades flow: pick accolade template from the catalog, then scan each recipient's passport QR (or type their 6-character code) to grant it. Camera stays on between users; code field clears after each successful grant.
+- `Accolade.awardedBy` records the steward's full name on every new grant. Legacy `"kiosk:<username>"` rows from v1.2 and earlier continue to display as `Kiosk @username`.
 
 ### Stats & leaderboards
 
-- **Personal** (on `/passport`): stamps collected, events participated, accolade count
-- **Per-event leaderboard** (on `/events/[slug]`): ranked by stamps within that event, with per-user accolade count shown alongside
-- **Overall leaderboard** (on `/leaderboard`): three boards behind a switcher
-  - **Points** (default) — sum of stamp.activity.points + accolade.points
-  - **Stamps** — most stamps collected
-  - **Accolades** — most accolades earned
-  Each board supports date filters (all time, this year, each quarter of the current and previous year) and an event filter
-- **Accolades**: all accolades are admin-managed — there is no auto-awarded layer. The `AccoladeTemplate` catalog at `/admin/accolades` defines the available accolades (label, emoji, theme, optional event tag, point value, active/inactive). Admins grant them per-user at `/admin/users/[id]`; kiosk operators grant them by scanning passport QRs at `/kiosk/give-accolade`. Granted accolades snapshot the template's fields so editing a template later does not retroactively rescore past grants.
+- **Personal** (on `/passport`): inline stat strip ("N stamps · M events · K accolades") plus the full stamps grid grouped by event. Stamps are paged at **6 per page** via `?stampPage=N` so passports stay snappy as a user collects many stamps over time. Page slicing is flat across all stamps (newest-first); event-name headers still appear on whichever events the page lands on. The `/u/[id]` read-only passport uses the same pagination.
+- **Per-event mini-rank** (on `/events/[slug]`): top 5 by overall points within that event. Renders with the same `<RankRow>` shape as the global rank for visual consistency, with an "All ranks →" link to `/leaderboard?event=<id>`.
+- **Global rank** (on `/leaderboard`, labelled "Rank" in the nav): three boards behind a switcher, **all ranked by points**:
+  - **Overall** (default) — `stampPoints + accoladePoints`
+  - **Stamp pts** — sum of `activity.points` for the user's stamps
+  - **Accolade pts** — sum of `accolade.points` for the user's accolades
+  Each board supports date filters (all time, this year, each quarter of the current and previous year) and an event filter. Every user appears in the rank — even at 0 pts — so newcomers can see themselves at the bottom and have something to aim for.
+- **Accolades**: all accolades are admin-managed — there is no auto-awarded layer. The `AccoladeTemplate` catalog at `/admin/accolades` defines the available accolades (label, emoji, theme, optional event tag, point value, active/inactive). Admins grant them per-user at `/admin/users/[id]`; stewards grant them by scanning passport QRs at `/steward/give-accolade`. Granted accolades snapshot the template's fields so editing a template later does not retroactively rescore past grants.
 
 ### Admin panel
 
 - Users / passports: search, view, override any field, reset password
 - Signup access codes: CRUD
 - Dropdown lists: Departments, Companies, Regions (CRUD; soft-deactivate)
-- Events / Activities: CRUD; generate QR + fallback code; activity points
+- Events / Activities: CRUD; per-event emoji; per-activity location + start/end times; generate QR + fallback code; activity points
 - Accolade catalog: CRUD on `AccoladeTemplate` rows (label, emoji, theme, event tag, points, active)
 - Per-user grant/revoke of accolades from `/admin/users/[id]`
-- Kiosk users: CRUD
-- Photo upload limits: edit at runtime
-- Audit log: view all admin actions
+- **Stewards**: user-dropdown picker, per-permission checkboxes (`canStamp`, `canGrantAccolades`), optional expiration, grant button. Active list with inline revoke + reason. Chronological history of every grant ever issued — doubles as the audit log for who handed out access.
+- Site title (centered header text): edit at runtime via `/admin/settings`
+- Photo upload limits: edit at runtime via `/admin/settings`
+- Dashboard: 3 hero KPI tiles (Users active · 7d / Stamps today / Events live) + catalog grid (Companies / Departments / Regions / Stewards / Access codes / Accolade templates)
 
 ## Future / V2+
 

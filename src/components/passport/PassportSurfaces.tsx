@@ -56,9 +56,14 @@ export function PassportSurfaces({
   editHref,
   accoladesHeaderExtras,
   newlyStampedActivityName,
+  totalStampsOverride,
+  stampsFooter,
 }: {
   user: UserForPassport;
   manualAccolades: ManualAccolade[];
+  // When paginated: pass the GROUPS FOR THIS PAGE (slice already
+  // applied + regrouped by event). Pass totalStampsOverride to keep
+  // the section header showing the lifetime count.
   eventGroups: EventGroup[];
   startedOn: string;
   signature: SignatureData | null;
@@ -66,8 +71,12 @@ export function PassportSurfaces({
   editHref: string | null;
   accoladesHeaderExtras?: React.ReactNode;
   newlyStampedActivityName?: string | null;
+  totalStampsOverride?: number;
+  stampsFooter?: React.ReactNode;
 }) {
-  const totalStamps = eventGroups.reduce((acc, g) => acc + g.stamps.length, 0);
+  const totalStamps =
+    totalStampsOverride ??
+    eventGroups.reduce((acc, g) => acc + g.stamps.length, 0);
   const totalAccolades = manualAccolades.length;
 
   return (
@@ -266,6 +275,11 @@ export function PassportSurfaces({
               ))
             )}
           </div>
+          {stampsFooter && (
+            <div className="border-t border-dashed border-stone-300/40 px-5 py-3 dark:border-stone-700/60">
+              {stampsFooter}
+            </div>
+          )}
         </div>
       </section>
     </>

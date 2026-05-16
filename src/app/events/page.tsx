@@ -7,6 +7,7 @@ import {
   eventStateFor,
   type EventState,
 } from "@/components/events/EventStatus";
+import { getEventStamperCounts } from "@/lib/event-stats";
 import { EYEBROW } from "@/lib/ui";
 
 export default async function EventsListPage() {
@@ -23,12 +24,15 @@ export default async function EventsListPage() {
   });
 
   const allActivityIds = events.flatMap((e) => e.activities.map((a) => a.id));
-  const myStamps = allActivityIds.length
-    ? await db.stamp.findMany({
-        where: { userId, activityId: { in: allActivityIds } },
-        select: { activityId: true },
-      })
-    : [];
+  const [myStamps, stamperCounts] = await Promise.all([
+    allActivityIds.length
+      ? db.stamp.findMany({
+          where: { userId, activityId: { in: allActivityIds } },
+          select: { activityId: true },
+        })
+      : Promise.resolve([] as Array<{ activityId: string }>),
+    getEventStamperCounts(events.map((e) => e.id)),
+  ]);
   const stampedActivityIds = new Set(myStamps.map((s) => s.activityId));
   const stampedPerEvent = new Map<string, number>();
   for (const e of events) {
@@ -48,6 +52,7 @@ export default async function EventsListPage() {
     state: EventState;
     myStamps: number;
     totalActivities: number;
+    stampersTotal: number;
   }
   const rendered: RenderedEvent[] = events.map((e) => {
     const totalActive = e.activities.length;
@@ -63,6 +68,7 @@ export default async function EventsListPage() {
       state,
       myStamps: myCount,
       totalActivities: totalActive,
+      stampersTotal: stamperCounts.get(e.id) ?? 0,
     };
   });
 
@@ -129,6 +135,7 @@ function Section({
     state: EventState;
     myStamps: number;
     totalActivities: number;
+    stampersTotal: number;
   }>;
 }) {
   if (events.length === 0) return null;
@@ -149,6 +156,7 @@ function Section({
               startDate={e.startDate}
               myStamps={e.myStamps}
               totalActivities={e.totalActivities}
+              stampersTotal={e.stampersTotal}
             />
           </li>
         ))}

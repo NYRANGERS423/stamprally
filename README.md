@@ -93,6 +93,11 @@ This is a **single-container** setup. Open the Unraid Docker tab → **Add Conta
 
 Apply. Unraid auto-creates the bind-mount directories.
 
+**Recommended extra (log rotation):** under Advanced view → Extra Parameters,
+add `--log-driver json-file --log-opt max-size=50m --log-opt max-file=5`. Caps
+docker's stdout log file at ~250 MB total so it doesn't grow forever on
+long-running deploys. Already set by default in `docker-compose.prod.yml`.
+
 ### Verify
 
 Click `stamprally` → **Logs**. You should see (paraphrased):
@@ -126,11 +131,11 @@ After the reverse proxy is live: edit the `stamprally` container → set `APP_UR
 Open `https://<your-domain>/admin/login` and sign in with `ADMIN_USERNAME` / `ADMIN_PASSWORD`. Then in order:
 1. **Departments / Companies / Regions** — add at least one of each (signup dropdowns).
 2. **Access codes** — create a code (e.g. `LAUNCH-2026`) and share it with the first wave of users.
-3. **Kiosk users** — create at least one (e.g. `front-desk` + a strong password).
-4. **Events → Activities** — set up your first event and its activity stations (each gets its own QR + 4-digit fallback code).
-5. **Accolades** — seed `/admin/accolades` with a catalog of awards (see [docs/accolade-seed-suggestions.md](docs/accolade-seed-suggestions.md) for starter ideas).
+3. **Events → Activities** — set up your first event and its activity stations (each gets its own QR + 4-digit fallback code).
+4. **Accolades** — seed `/admin/accolades` with a catalog of awards (see [docs/accolade-seed-suggestions.md](docs/accolade-seed-suggestions.md) for starter ideas).
+5. **Stewards** — once you have users signed up, promote whoever runs the events at `/admin/stewards`. Stewards get a "Steward" entry in their hamburger menu and can display activity QRs + grant accolades from their own phone — no shared kiosk account needed.
 
-Users sign up at `/signup`. Kiosks sign in at `/kiosk/login` and pick an activity to display its QR.
+Users sign up at `/signup`. Event helpers (Stewards) use their normal user account; the Steward menu appears in the hamburger once an admin grants them access.
 
 ### Backups
 
@@ -180,14 +185,15 @@ Same combined image, same bind-mount layout — just a different way to wire it 
 
 | Path | Audience | Notes |
 |---|---|---|
-| `/` | Public | Landing page with sign-up / sign-in / kiosk-sign-in links |
+| `/` | Public | Landing page with sign-up + sign-in |
 | `/signup`, `/login`, `/force-change-password` | Public | User auth |
-| `/passport`, `/passport/edit` | User | Profile, photo cropper, signature, tags, stats, accolades |
+| `/passport`, `/passport/edit` | User | Profile, photo cropper, signature, tags, stats, accolades. Stamps section is paged at 6 per page (`?stampPage=N`). |
+| `/u/[id]` | User | Read-only passport view linked from `/leaderboard` rows. Same pagination. |
 | `/check-in`, `/check-in/[token]` | User | Type the 4-digit code or scan a QR |
-| `/events`, `/events/[slug]` | User | Event list + leaderboard + progress |
-| `/admin/login`, `/admin/...` | Admin | env-var creds. Events tree, kiosk users, access codes, dropdowns, settings |
-| `/kiosk/login`, `/kiosk/...` | Kiosk | Event/activity picker + QR display, plus a "Give accolade" flow for handing out awards by scanning a user's passport |
-| `/leaderboard` | User | Top stampers / accolade-earners / points-ranked, filterable by quarter or event |
+| `/events`, `/events/[slug]` | User | Event list grouped by lifecycle (Happening now / Coming up / Past) + per-event rank + clickable activity sheet. Activities paged at 12 per page. |
+| `/leaderboard` | User | Three boards (Overall / Stamp pts / Accolade pts) — all ranked by points. Filterable by quarter or event. |
+| `/admin/login`, `/admin/...` | Admin | env-var creds. Users, events, accolade catalog, stewards, access codes, dropdowns, settings. |
+| `/steward`, `/steward/...` | User w/ grant | Operator surface — event/activity picker + QR display + accolade grant flow. Only visible to users with an active `StewardGrant`. |
 
 ---
 

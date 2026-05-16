@@ -16,6 +16,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
 
   app:
     build:
@@ -38,6 +43,11 @@ services:
       - /app/node_modules
       - /app/.next
       - uploads:/app/uploads
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
 
 volumes:
   postgres_data:

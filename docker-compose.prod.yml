@@ -19,3 +19,11 @@ services:
     volumes:
       - ${DATA_DIR:-./data}/db:/var/lib/postgresql/data
       - ${DATA_DIR:-./data}/uploads:/app/uploads
+    # Cap docker's stdout log file so it doesn't grow forever. 50 MB
+    # × 5 files = ~250 MB max per container. Plenty for diagnosis,
+    # safely bounded for long-running deploys.
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"

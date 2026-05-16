@@ -5,15 +5,21 @@ import { db } from "@/lib/db";
 import { UserHeader } from "@/components/user/UserHeader";
 import { RankRow } from "@/components/leaderboard/RankRow";
 import { ActivityList } from "@/components/events/ActivityList";
+import { PageFlipper, clampPage } from "@/components/ui/PageFlipper";
 import { fetchLeaderboard } from "@/lib/leaderboard";
+
+const ACTIVITIES_PER_PAGE = 12;
 
 export default async function EventDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ activityPage?: string }>;
 }) {
   const { userId } = await requireUser();
   const { slug } = await params;
+  const { activityPage } = await searchParams;
 
   const event = await db.event.findUnique({
     where: { slug },
@@ -50,6 +56,22 @@ export default async function EventDetailPage({
   const myStampedActivityIds = new Set(myStamps.map((s) => s.activityId));
   const totalActive = allActivityIds.length;
   const myStampedCount = myStampedActivityIds.size;
+
+  // Activities pagination — flat slice, no regrouping needed.
+  const totalActivityPages = Math.max(
+    1,
+    Math.ceil(event.activities.length / ACTIVITIES_PER_PAGE),
+  );
+  const currentActivityPage = clampPage(activityPage, totalActivityPages);
+  const activityStart = (currentActivityPage - 1) * ACTIVITIES_PER_PAGE;
+  const pagedActivities = event.activities.slice(
+    activityStart,
+    activityStart + ACTIVITIES_PER_PAGE,
+  );
+
+  function activityPageHref(p: number): string {
+    return p === 1 ? `/events/${slug}` : `/events/${slug}?activityPage=${p}`;
+  }
 
   return (
     <>
@@ -112,7 +134,7 @@ export default async function EventDetailPage({
           </div>
           <div className="mt-5">
             <ActivityList
-              activities={event.activities.map((a) => ({
+              activities={pagedActivities.map((a) => ({
                 id: a.id,
                 name: a.name,
                 description: a.description,
@@ -122,6 +144,12 @@ export default async function EventDetailPage({
                 points: a.points,
                 done: myStampedActivityIds.has(a.id),
               }))}
+            />
+            <PageFlipper
+              current={currentActivityPage}
+              total={totalActivityPages}
+              buildHref={activityPageHref}
+              label="Activity pages"
             />
           </div>
         </section>

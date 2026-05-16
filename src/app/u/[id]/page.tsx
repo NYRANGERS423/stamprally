@@ -5,6 +5,7 @@ import { getUserSession } from "@/lib/auth/session";
 import { parseSignature } from "@/lib/signature";
 import { PassportSurfaces } from "@/components/passport/PassportSurfaces";
 import { StatsStrip } from "@/components/passport/StatsStrip";
+import { PageFlipper, clampPage } from "@/components/ui/PageFlipper";
 import { UserHeader } from "@/components/user/UserHeader";
 import { getTheme } from "@/lib/themes";
 import {
@@ -12,16 +13,21 @@ import {
   loadManualAccolades,
 } from "@/lib/passport-stats";
 
+const STAMPS_PER_PAGE = 6;
+
 // Pass 03 / design-handoff §4.3.1 — read-only passport view that the
 // leaderboard rows link to. Any signed-in user can view any other
 // signed-in user's passport ("Browse should beget browsing"). No edit
 // affordance and no MyIdSheet — just a back-pill to the leaderboard.
 export default async function UserPassportPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ stampPage?: string }>;
 }) {
   const { id } = await params;
+  const { stampPage } = await searchParams;
   const session = await getUserSession();
   if (!session.userId) redirect("/login");
   if (session.mustChangePassword) redirect("/force-change-password");
@@ -59,11 +65,18 @@ export default async function UserPassportPage({
   if (!user) notFound();
 
   const totalAccolades = manualAccolades.length;
+
+  // Stamps pagination: same shape as /passport.
+  const totalPages = Math.max(1, Math.ceil(stamps.length / STAMPS_PER_PAGE));
+  const currentPage = clampPage(stampPage, totalPages);
+  const pageStart = (currentPage - 1) * STAMPS_PER_PAGE;
+  const pageStamps = stamps.slice(pageStart, pageStart + STAMPS_PER_PAGE);
+
   const stampsByEvent = new Map<
     string,
     { eventId: string; eventName: string; stamps: typeof stamps }
   >();
-  for (const s of stamps) {
+  for (const s of pageStamps) {
     const eId = s.activity.event.id;
     if (!stampsByEvent.has(eId)) {
       stampsByEvent.set(eId, {
@@ -75,6 +88,10 @@ export default async function UserPassportPage({
     stampsByEvent.get(eId)!.stamps.push(s);
   }
   const eventGroups = Array.from(stampsByEvent.values());
+
+  function stampPageHref(p: number): string {
+    return p === 1 ? `/u/${id}` : `/u/${id}?stampPage=${p}`;
+  }
 
   const startedOn = user.startDate.toLocaleDateString(undefined, {
     year: "numeric",
@@ -107,6 +124,16 @@ export default async function UserPassportPage({
             signature={signature}
             theme={theme}
             editHref={null}
+            totalStampsOverride={stamps.length}
+            stampsFooter={
+              <PageFlipper
+                current={currentPage}
+                total={totalPages}
+                buildHref={stampPageHref}
+                label="Stamps pages"
+                scrollAnchor="stamps"
+              />
+            }
           />
 
           <StatsStrip

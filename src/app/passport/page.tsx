@@ -7,12 +7,15 @@ import { MyIdSheet } from "@/components/passport/MyIdSheet";
 import { PassportSurfaces } from "@/components/passport/PassportSurfaces";
 import { StampedFlash } from "@/components/passport/StampedFlash";
 import { StatsStrip } from "@/components/passport/StatsStrip";
+import { PageFlipper, clampPage } from "@/components/ui/PageFlipper";
 import { UserHeader } from "@/components/user/UserHeader";
 import { getTheme } from "@/lib/themes";
 import {
   computePersonalStats,
   loadManualAccolades,
 } from "@/lib/passport-stats";
+
+const STAMPS_PER_PAGE = 6;
 
 export default async function PassportPage({
   searchParams,
@@ -22,9 +25,10 @@ export default async function PassportPage({
     already?: string;
     stampError?: string;
     need?: string;
+    stampPage?: string;
   }>;
 }) {
-  const { stamped, already, stampError, need } = await searchParams;
+  const { stamped, already, stampError, need, stampPage } = await searchParams;
   const flashName = stamped ?? already;
   const flashMode: import("@/components/passport/StampedFlash").FlashMode | null =
     stamped
@@ -75,11 +79,19 @@ export default async function PassportPage({
     redirect("/login");
   }
 
+  // Stamps pagination — flat slice over stamps (already in newest-first
+  // order), then regroup the slice by event so the event headers still
+  // appear on each page even if a page spans two events.
+  const totalPages = Math.max(1, Math.ceil(stamps.length / STAMPS_PER_PAGE));
+  const currentPage = clampPage(stampPage, totalPages);
+  const pageStart = (currentPage - 1) * STAMPS_PER_PAGE;
+  const pageStamps = stamps.slice(pageStart, pageStart + STAMPS_PER_PAGE);
+
   const stampsByEvent = new Map<
     string,
     { eventId: string; eventName: string; stamps: typeof stamps }
   >();
-  for (const s of stamps) {
+  for (const s of pageStamps) {
     const eId = s.activity.event.id;
     const eName = s.activity.event.name;
     if (!stampsByEvent.has(eId)) {
@@ -88,6 +100,10 @@ export default async function PassportPage({
     stampsByEvent.get(eId)!.stamps.push(s);
   }
   const eventGroups = Array.from(stampsByEvent.values());
+
+  function stampPageHref(p: number): string {
+    return p === 1 ? "/passport" : `/passport?stampPage=${p}`;
+  }
 
   const startedOn = user.startDate.toLocaleDateString(undefined, {
     year: "numeric",
@@ -129,6 +145,16 @@ export default async function PassportPage({
               />
             }
             newlyStampedActivityName={stamped ?? null}
+            totalStampsOverride={stamps.length}
+            stampsFooter={
+              <PageFlipper
+                current={currentPage}
+                total={totalPages}
+                buildHref={stampPageHref}
+                label="Stamps pages"
+                scrollAnchor="stamps"
+              />
+            }
           />
 
           <StatsStrip
