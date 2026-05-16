@@ -30,3 +30,10 @@ export const CARD =
 
 export const CARD_HEADER =
   "border-b border-stone-200 px-4 py-3 dark:border-stone-800";
+
+// Pass 02 / design-handoff §4.2.1: one canonical eyebrow shape for every
+// small-caps label outside the themed passport card (section headers,
+// StatsStrip, stat segment labels, etc.). The themed passport card keeps
+// its own labelClass since labels are part of the card art.
+export const EYEBROW =
+  "font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-stone-500 dark:text-stone-400";

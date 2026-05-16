@@ -9,8 +9,10 @@ import { AccoladeList } from "@/components/passport/AccoladeList";
 import { MyIdSheet } from "@/components/passport/MyIdSheet";
 import { SignatureRender } from "@/components/passport/SignatureRender";
 import { StampedFlash } from "@/components/passport/StampedFlash";
+import { StatsStrip } from "@/components/passport/StatsStrip";
 import { UserHeader } from "@/components/user/UserHeader";
 import { getTheme } from "@/lib/themes";
+import { EYEBROW } from "@/lib/ui";
 import {
   computePersonalStats,
   loadManualAccolades,
@@ -205,27 +207,40 @@ export default async function PassportPage({
             </p>
           </div>
           </div>
-        </div>
-
-        <div className="mt-6">
           <Link
-            href="/check-in"
-            className={`flex h-14 w-full items-center justify-center gap-2 rounded-full px-6 text-base font-semibold shadow-md transition-colors ${theme.ctaClass}`}
+            href="/passport/edit"
+            aria-label="Edit passport"
+            className="absolute bottom-3 left-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/85 text-stone-700 shadow-sm ring-1 ring-stone-300/70 backdrop-blur transition-colors hover:bg-white hover:text-stone-900 dark:bg-stone-900/80 dark:text-stone-300 dark:ring-stone-700/70 dark:hover:bg-stone-900 dark:hover:text-stone-100"
           >
-            <StampNewIcon />
-            Stamp new place
+            <PencilIcon />
           </Link>
         </div>
 
-        <section className="mt-6 grid grid-cols-3 gap-3 text-center">
-          <Stat label="Stamps" value={stats.totalStamps} />
-          <Stat label="Events" value={stats.eventsParticipated} />
-          <Stat label="Accolades" value={totalAccolades} />
-        </section>
+        <StatsStrip
+          stamps={stats.totalStamps}
+          events={stats.eventsParticipated}
+          accolades={totalAccolades}
+        />
 
-        <section className="mt-4 overflow-hidden rounded-2xl border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900">
+        {stamps.length === 0 && (
+          <div className="mt-4 flex justify-center">
+            <Link
+              href="/check-in"
+              className="inline-flex h-9 items-center gap-1.5 rounded-full border border-stamp-500/30 bg-stamp-50 px-4 text-sm font-medium text-stamp-700 transition-colors hover:bg-stamp-100 dark:border-stamp-500/40 dark:bg-stamp-500/10 dark:text-stamp-500"
+            >
+              <span aria-hidden>📍</span>
+              Stamp at an event
+              <span aria-hidden>→</span>
+            </Link>
+          </div>
+        )}
+
+        <section
+          id="accolades"
+          className="mt-6 overflow-hidden rounded-2xl border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900"
+        >
           <div className="flex items-center justify-between gap-3 border-b border-stone-200 px-4 py-3 dark:border-stone-800">
-            <h2 className="text-sm font-medium">Accolades</h2>
+            <h2 className={EYEBROW}>Accolades</h2>
             <MyIdSheet
               userId={user.id}
               name={`${user.firstName} ${user.lastName}`}
@@ -243,7 +258,10 @@ export default async function PassportPage({
           )}
         </section>
 
-        <section className={`relative mt-6 overflow-hidden rounded-2xl ${theme.stampsCardClass}`}>
+        <section
+          id="stamps"
+          className={`relative mt-6 overflow-hidden rounded-2xl ${theme.stampsCardClass}`}
+        >
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
@@ -335,22 +353,21 @@ function Row({
   );
 }
 
-function StampNewIcon() {
+function PencilIcon() {
   return (
     <svg
-      width="22"
-      height="22"
+      width="14"
+      height="14"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.5"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
-      <path d="M7 7h10l1 4H6z" />
-      <path d="M5 13h14v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" />
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
     </svg>
   );
 }
@@ -422,17 +439,6 @@ function StampImpression({
           <p className="mt-0.5 font-mono text-[8px] opacity-70">&apos;{year}</p>
         </div>
       </div>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-lg border border-stone-200 bg-white px-4 py-3 dark:border-stone-800 dark:bg-stone-900">
-      <p className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
-        {label}
-      </p>
-      <p className="mt-1 text-2xl font-semibold">{value}</p>
     </div>
   );
 }
