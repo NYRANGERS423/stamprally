@@ -2,6 +2,11 @@ import Link from "next/link";
 import { requireKiosk } from "@/lib/auth/kiosk-guard";
 import { db } from "@/lib/db";
 import { KioskTopBar } from "@/components/kiosk/KioskTopBar";
+import {
+  EventStatus,
+  eventStateFor,
+} from "@/components/events/EventStatus";
+import { RITUAL_BTN } from "@/lib/ui";
 
 export default async function KioskHome() {
   const { username } = await requireKiosk();
@@ -10,6 +15,7 @@ export default async function KioskHome() {
     orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
     include: { _count: { select: { activities: true } } },
   });
+  const now = new Date();
 
   return (
     <>
@@ -25,11 +31,11 @@ export default async function KioskHome() {
               it&apos;s missing.
             </p>
           </div>
-          <Link
-            href="/kiosk/give-accolade"
-            className="inline-flex h-11 items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-5 text-sm font-semibold text-amber-900 shadow-sm transition-colors hover:bg-amber-100 active:bg-amber-200 dark:border-amber-700 dark:bg-amber-950/60 dark:text-amber-100 dark:hover:bg-amber-900/60"
-          >
-            <span aria-hidden>★</span>
+          {/* Give-accolade is a ritual action — use the amber pill */}
+          <Link href="/kiosk/give-accolade" className={RITUAL_BTN}>
+            <span aria-hidden className="mr-1.5">
+              ★
+            </span>
             Give accolade
           </Link>
         </div>
@@ -40,28 +46,58 @@ export default async function KioskHome() {
           </p>
         ) : (
           <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-            {events.map((event) => (
-              <li key={event.id}>
-                <Link
-                  href={`/kiosk/${event.id}`}
-                  className="block rounded-xl border border-stone-200 bg-white p-5 transition-colors hover:border-brand-500 hover:bg-brand-50 active:bg-brand-100 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-brand-500 dark:hover:bg-brand-900/30"
-                >
-                  <div className="text-lg font-semibold">{event.name}</div>
-                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-500 dark:text-stone-400">
-                    <span>{event._count.activities} activities</span>
-                    {event.startDate && (
-                      <span>
-                        {event.startDate.toLocaleDateString(undefined, {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              </li>
-            ))}
+            {events.map((event) => {
+              const state = eventStateFor(
+                event.active,
+                event.startDate,
+                event.endDate,
+                now,
+              );
+              const dateLabel = event.startDate
+                ? event.startDate.toLocaleDateString(undefined, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })
+                : "Anytime";
+              return (
+                <li key={event.id}>
+                  <Link
+                    href={`/kiosk/${event.id}`}
+                    className="group block rounded-2xl border border-stone-200 bg-white p-5 transition-shadow hover:shadow-md dark:border-stone-800 dark:bg-stone-900"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-xl bg-brand-50 text-2xl text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
+                        <span aria-hidden>🎪</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <h2 className="text-lg font-semibold leading-tight text-stone-900 group-hover:text-brand-700 dark:text-stone-100 dark:group-hover:text-brand-300">
+                            {event.name}
+                          </h2>
+                          <EventStatus state={state} />
+                        </div>
+                        <p className="mt-1 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.08em] text-stone-500 dark:text-stone-400">
+                          <span>{dateLabel}</span>
+                          <span
+                            aria-hidden
+                            className="text-stone-300 dark:text-stone-700"
+                          >
+                            ·
+                          </span>
+                          <span>
+                            {event._count.activities}{" "}
+                            {event._count.activities === 1
+                              ? "activity"
+                              : "activities"}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </main>

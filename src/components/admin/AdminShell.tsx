@@ -5,18 +5,49 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-const NAV = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/users", label: "Users" },
-  { href: "/admin/events", label: "Events" },
-  { href: "/admin/accolades", label: "Accolades" },
-  { href: "/admin/kiosk-users", label: "Kiosk users" },
-  { href: "/admin/access-codes", label: "Access codes" },
-  { href: "/admin/dropdowns/departments", label: "Departments" },
-  { href: "/admin/dropdowns/companies", label: "Companies" },
-  { href: "/admin/dropdowns/regions", label: "Regions" },
-  { href: "/admin/settings", label: "Settings" },
+// Pass 05 / design-handoff §4.5.1 — group the 10 nav items by intent
+// so the sidebar stops reading as one long flat list.
+interface NavItem {
+  href: string;
+  label: string;
+}
+interface NavGroup {
+  title: string;
+  items: NavItem[];
+}
+const NAV_GROUPS: NavGroup[] = [
+  {
+    title: "Overview",
+    items: [{ href: "/admin", label: "Dashboard" }],
+  },
+  {
+    title: "People",
+    items: [
+      { href: "/admin/users", label: "Users" },
+      { href: "/admin/kiosk-users", label: "Kiosk users" },
+    ],
+  },
+  {
+    title: "Content",
+    items: [
+      { href: "/admin/events", label: "Events" },
+      { href: "/admin/accolades", label: "Accolades" },
+    ],
+  },
+  {
+    title: "Configuration",
+    items: [
+      { href: "/admin/access-codes", label: "Access codes" },
+      { href: "/admin/dropdowns/departments", label: "Departments" },
+      { href: "/admin/dropdowns/companies", label: "Companies" },
+      { href: "/admin/dropdowns/regions", label: "Regions" },
+      { href: "/admin/settings", label: "Settings" },
+    ],
+  },
 ];
+
+const GROUP_LABEL_CLASS =
+  "px-3 pb-1 pt-3 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-400 dark:text-stone-500";
 
 function isActive(pathname: string | null, href: string): boolean {
   if (!pathname) return false;
@@ -70,20 +101,27 @@ export function AdminShell({
 
       <div className="mx-auto flex w-full max-w-6xl flex-1 gap-8 px-4 py-6 sm:px-6 sm:py-8">
         <aside className="hidden w-56 shrink-0 md:block">
-          <nav className="flex flex-col gap-1 text-sm">
-            {NAV.map((item) => {
-              const active = isActive(pathname, item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={navItemClass(active)}
-                >
-                  <span>{item.label}</span>
-                  {active && <BrandMarker />}
-                </Link>
-              );
-            })}
+          <nav className="flex flex-col text-sm">
+            {NAV_GROUPS.map((group, gi) => (
+              <div key={group.title} className={gi === 0 ? "" : "mt-1"}>
+                <p className={GROUP_LABEL_CLASS}>{group.title}</p>
+                <div className="flex flex-col gap-1">
+                  {group.items.map((item) => {
+                    const active = isActive(pathname, item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={navItemClass(active)}
+                      >
+                        <span>{item.label}</span>
+                        {active && <BrandMarker />}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </nav>
         </aside>
         <main className="min-w-0 flex-1">{children}</main>
@@ -114,21 +152,28 @@ export function AdminShell({
                 <CloseIcon />
               </button>
             </div>
-            <nav className="flex flex-col gap-1 p-2 text-base">
-              {NAV.map((item) => {
-                const active = isActive(pathname, item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={close}
-                    className={navItemClass(active, true)}
-                  >
-                    <span>{item.label}</span>
-                    {active && <BrandMarker />}
-                  </Link>
-                );
-              })}
+            <nav className="flex flex-col p-2 text-base">
+              {NAV_GROUPS.map((group, gi) => (
+                <div key={group.title} className={gi === 0 ? "" : "mt-1"}>
+                  <p className={GROUP_LABEL_CLASS}>{group.title}</p>
+                  <div className="flex flex-col gap-1">
+                    {group.items.map((item) => {
+                      const active = isActive(pathname, item.href);
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={close}
+                          className={navItemClass(active, true)}
+                        >
+                          <span>{item.label}</span>
+                          {active && <BrandMarker />}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </nav>
           </div>
         </div>
