@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { boardValue, type Board, type RankRow as RankRowData } from "@/lib/leaderboard";
+import { boardValue, type Board, type RankRow as RankRowData } from "@/lib/leaderboard-shared";
 
 // Pass 03 / design-handoff §4.3.1 — sticky footer that pins the
 // current user's row when their actual row scrolls off-screen.

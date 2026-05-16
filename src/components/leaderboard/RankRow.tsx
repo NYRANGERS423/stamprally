@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { boardValue, type Board, type RankRow as RankRowData } from "@/lib/leaderboard";
+import { boardValue, type Board, type RankRow as RankRowData } from "@/lib/leaderboard-shared";
 
 // Pass 03 / design-handoff §4.3.1 — single leaderboard row.
 // Rank number is mono + tabular. Top-3 ranks get a tinted ring (gold /

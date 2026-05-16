@@ -1,5 +1,11 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { boardValue, type Board, type RankRow } from "./leaderboard-shared";
+
+// Re-export the isomorphic shapes so server-side callers can keep
+// importing everything from @/lib/leaderboard.
+export { boardValue };
+export type { Board, RankRow };
 
 export interface RangeOption {
   key: string;
@@ -7,8 +13,6 @@ export interface RangeOption {
   start?: Date; // inclusive
   end?: Date; // exclusive
 }
-
-export type Board = "points" | "stamps" | "accolades";
 
 // All three boards rank by POINTS (per fix-list 2026-05-16):
 // - points    : total = stampPoints + accoladePoints
@@ -37,19 +41,6 @@ export const BOARDS: Array<{ key: Board; label: string; hint: string }> = [
 export function parseBoard(input: string | undefined): Board {
   if (input === "stamps" || input === "accolades") return input;
   return "points";
-}
-
-export interface RankRow {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  photoPath: string | null;
-  stamps: number;
-  accolades: number;
-  events: number;
-  stampPoints: number;
-  accoladePoints: number;
-  points: number; // stampPoints + accoladePoints
 }
 
 export function getRangeOptions(now: Date = new Date()): RangeOption[] {
@@ -96,12 +87,6 @@ export function findRange(
   opts: RangeOption[],
 ): RangeOption {
   return opts.find((o) => o.key === key) ?? opts[0];
-}
-
-export function boardValue(row: RankRow, board: Board): number {
-  if (board === "points") return row.points;
-  if (board === "stamps") return row.stampPoints;
-  return row.accoladePoints;
 }
 
 export async function fetchLeaderboard({
