@@ -71,15 +71,19 @@ export function AdminShell({
       <div className="mx-auto flex w-full max-w-6xl flex-1 gap-8 px-4 py-6 sm:px-6 sm:py-8">
         <aside className="hidden w-56 shrink-0 md:block">
           <nav className="flex flex-col gap-1 text-sm">
-            {NAV.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={navItemClass(isActive(pathname, item.href))}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {NAV.map((item) => {
+              const active = isActive(pathname, item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={navItemClass(active)}
+                >
+                  <span>{item.label}</span>
+                  {active && <BrandMarker />}
+                </Link>
+              );
+            })}
           </nav>
         </aside>
         <main className="min-w-0 flex-1">{children}</main>
@@ -111,16 +115,20 @@ export function AdminShell({
               </button>
             </div>
             <nav className="flex flex-col gap-1 p-2 text-base">
-              {NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={close}
-                  className={navItemClass(isActive(pathname, item.href), true)}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {NAV.map((item) => {
+                const active = isActive(pathname, item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={close}
+                    className={navItemClass(active, true)}
+                  >
+                    <span>{item.label}</span>
+                    {active && <BrandMarker />}
+                  </Link>
+                );
+              })}
             </nav>
           </div>
         </div>
@@ -131,17 +139,29 @@ export function AdminShell({
 
 function navItemClass(active: boolean, mobile = false): string {
   const base = mobile
-    ? "flex min-h-12 items-center rounded-md px-3"
-    : "flex min-h-10 items-center rounded-md px-3 py-2";
+    ? "relative flex min-h-12 items-center justify-between rounded-lg px-3 transition-colors"
+    : "relative flex min-h-10 items-center justify-between rounded-lg px-3 py-2 transition-colors";
   if (active) {
+    // Soft hairline ring + tiny lift to make the active item unmistakable
+    // against the page surface. See design-handoff README §4.1.2.
     return (
       base +
-      " bg-stone-200 font-medium text-stone-900 dark:bg-stone-800 dark:text-stone-100"
+      " bg-white font-medium text-stone-900 shadow-[0_0_0_1px_var(--color-rule),0_1px_2px_rgba(0,0,0,0.04)]" +
+      " dark:bg-stone-800 dark:text-stone-50 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.4)]"
     );
   }
   return (
     base +
     " text-stone-700 hover:bg-stone-100 hover:text-stone-900 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+  );
+}
+
+function BrandMarker() {
+  return (
+    <span
+      aria-hidden
+      className="ml-2 inline-block h-4 w-1 shrink-0 rounded-sm bg-brand-600 dark:bg-brand-500"
+    />
   );
 }
 

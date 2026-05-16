@@ -1,14 +1,13 @@
 import Link from "next/link";
 import { kioskLogoutAction } from "@/lib/actions/kiosk-auth";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Segmented, type SegmentedItem } from "@/components/ui/Segmented";
 
-const NAV = [
-  { href: "/kiosk", label: "Events", match: "events" as const },
-  {
-    href: "/kiosk/give-accolade",
-    label: "Accolades",
-    match: "accolades" as const,
-  },
+type KioskTab = "events" | "accolades";
+
+const NAV: SegmentedItem<KioskTab>[] = [
+  { value: "events", label: "Events", href: "/kiosk" },
+  { value: "accolades", label: "Accolades", href: "/kiosk/give-accolade" },
 ];
 
 export function KioskTopBar({
@@ -16,11 +15,11 @@ export function KioskTopBar({
   active = null,
 }: {
   username: string;
-  active?: "events" | "accolades" | null;
+  active?: KioskTab | null;
 }) {
   return (
-    <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/95 backdrop-blur dark:border-stone-800 dark:bg-stone-900/95">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-1 px-3 py-2.5 sm:gap-2 sm:px-6">
+    <header className="sticky top-0 z-30 border-b border-stone-200 bg-paper/92 backdrop-blur-md dark:border-stone-800 dark:bg-stone-900/90">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-6">
         <Link
           href="/kiosk"
           className="flex items-center gap-2 px-0.5 sm:px-1"
@@ -36,24 +35,8 @@ export function KioskTopBar({
             @{username}
           </span>
         </Link>
-        <nav className="flex items-center gap-0.5 sm:gap-1">
-          {NAV.map((item) => {
-            const isActive = active === item.match;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={
-                  "inline-flex h-10 items-center justify-center rounded-md px-2 text-sm font-medium transition-colors sm:px-3 " +
-                  (isActive
-                    ? "bg-stone-200 text-stone-900 dark:bg-stone-800 dark:text-stone-100"
-                    : "text-stone-600 hover:bg-stone-100 hover:text-stone-900 active:bg-stone-200 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100")
-                }
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Segmented<KioskTab> items={NAV} active={active} ariaLabel="Kiosk sections" />
           <ThemeToggle className="ml-0.5 sm:ml-1" />
           <form action={kioskLogoutAction}>
             <button
@@ -79,7 +62,7 @@ export function KioskTopBar({
               </svg>
             </button>
           </form>
-        </nav>
+        </div>
       </div>
     </header>
   );

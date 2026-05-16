@@ -13,8 +13,23 @@
   --color-brand-600: #2563eb;
   --color-brand-700: #1d4ed8;
   --color-brand-900: #1e3a8a;
+  --color-stamp-50: #fffbeb;
   --color-stamp-500: #d97706;
   --color-stamp-600: #b45309;
+
+  /* Page background — sits between stone-50 and white. */
+  --color-paper: #fbfaf7;
+
+  /* Semantic aliases (Pass 01 / design-handoff §6).
+     Blue is system. Amber is ritual. Every operational action is blue;
+     amber is reserved for the stamp moment, points, and editing-as-ritual. */
+  --color-action: #2563eb;       /* brand-600 — system primary */
+  --color-action-soft: #dbeafe;  /* brand-100 — active-tab fill / soft surfaces */
+  --color-ritual: #d97706;       /* stamp-500 — stamp moment */
+  --color-ritual-soft: #fffbeb;  /* stamp-50  — flash background */
+  --color-rule: #e7e5e4;         /* stone-200 — hairlines */
+  --color-ink: #1c1917;          /* stone-900 — primary text */
+  --color-ink-dim: #57534e;      /* stone-600 — secondary text */
 }
 
 /* Mobile / touch friendliness defaults. */

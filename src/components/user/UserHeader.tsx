@@ -1,31 +1,51 @@
 import Link from "next/link";
 import { logoutAction } from "@/lib/actions/user-auth";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Segmented, type SegmentedItem } from "@/components/ui/Segmented";
+
+type ActiveTab = "passport" | "events" | "stamp" | "leaderboard" | "edit" | null;
+
+type NavValue = "passport" | "events" | "leaderboard" | "stamp";
 
 interface NavItem {
   href: string;
   label: string;
+  value: NavValue;
 }
 
 const DEFAULT_NAV: NavItem[] = [
-  { href: "/passport", label: "Passport" },
-  { href: "/events", label: "Events" },
-  { href: "/leaderboard", label: "Ranks" },
-  { href: "/check-in", label: "Stamp" },
+  { href: "/passport", label: "Passport", value: "passport" },
+  { href: "/events", label: "Events", value: "events" },
+  { href: "/leaderboard", label: "Leaderboard", value: "leaderboard" },
+  { href: "/check-in", label: "Stamp", value: "stamp" },
 ];
+
+function activeValue(active: ActiveTab): NavValue | null {
+  if (active === "passport" || active === "edit") return "passport";
+  if (active === "events") return "events";
+  if (active === "leaderboard") return "leaderboard";
+  if (active === "stamp") return "stamp";
+  return null;
+}
 
 export function UserHeader({
   active,
   nav = DEFAULT_NAV,
   showLogout = true,
 }: {
-  active?: "passport" | "events" | "stamp" | "leaderboard" | "edit" | null;
+  active?: ActiveTab;
   nav?: NavItem[];
   showLogout?: boolean;
 }) {
+  const segmentedItems: SegmentedItem<NavValue>[] = nav.map((item) => ({
+    value: item.value,
+    label: item.label,
+    href: item.href,
+  }));
+
   return (
-    <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/95 backdrop-blur dark:border-stone-800 dark:bg-stone-900/95">
-      <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-1 px-3 py-2.5 sm:gap-2 sm:px-6">
+    <header className="sticky top-0 z-30 border-b border-stone-200 bg-paper/92 backdrop-blur-md dark:border-stone-800 dark:bg-stone-900/90">
+      <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-6">
         <Link
           href="/passport"
           className="flex items-center gap-2 px-0.5 text-brand-700 sm:px-1 dark:text-brand-500"
@@ -36,29 +56,12 @@ export function UserHeader({
             Stamprally
           </span>
         </Link>
-        <nav className="flex items-center gap-0.5 sm:gap-1">
-          {nav.map((item) => {
-            const isActive =
-              ((active === "passport" || active === "edit") &&
-                item.href === "/passport") ||
-              (active === "events" && item.href === "/events") ||
-              (active === "leaderboard" && item.href === "/leaderboard") ||
-              (active === "stamp" && item.href === "/check-in");
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={
-                  "inline-flex h-10 items-center justify-center rounded-md px-2 text-sm font-medium transition-colors sm:px-3 " +
-                  (isActive
-                    ? "bg-stone-200 text-stone-900 dark:bg-stone-800 dark:text-stone-100"
-                    : "text-stone-600 hover:bg-stone-100 hover:text-stone-900 active:bg-stone-200 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100")
-                }
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Segmented<NavValue>
+            items={segmentedItems}
+            active={activeValue(active ?? null)}
+            ariaLabel="Primary"
+          />
           <ThemeToggle className="ml-0.5 sm:ml-1" />
           {showLogout && (
             <form action={logoutAction}>
@@ -86,7 +89,7 @@ export function UserHeader({
               </button>
             </form>
           )}
-        </nav>
+        </div>
       </div>
     </header>
   );
