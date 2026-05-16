@@ -1,5 +1,7 @@
 import "server-only";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { getUserSession } from "@/lib/auth/session";
 
 // Stewards are existing users who hold an admin-issued grant to run
 // the stamp + accolade flows (the surfaces that used to live under
@@ -51,4 +53,29 @@ export async function canStamp(userId: string): Promise<boolean> {
 export async function canGrantAccolades(userId: string): Promise<boolean> {
   const g = await getActiveStewardGrant(userId);
   return g?.canGrantAccolades ?? false;
+}
+
+export type StewardPerm = "stamp" | "accolades";
+
+// Page-level guard. Redirects unauthenticated users to /login (with
+// a ?next= back-link), forces logged-in non-stewards back to their
+// passport, and enforces the per-perm flag when one is requested.
+// Returns the active grant + session user id so callers can record
+// audit attribution.
+export async function requireSteward(
+  perm?: StewardPerm,
+  currentPath = "/steward",
+): Promise<{ userId: string; grant: ActiveStewardGrant }> {
+  const session = await getUserSession();
+  if (!session.userId) {
+    redirect(`/login?next=${encodeURIComponent(currentPath)}`);
+  }
+  if (session.mustChangePassword) redirect("/force-change-password");
+
+  const grant = await getActiveStewardGrant(session.userId);
+  if (!grant) redirect("/passport?need=steward");
+  if (perm === "stamp" && !grant.canStamp) redirect("/steward");
+  if (perm === "accolades" && !grant.canGrantAccolades) redirect("/steward");
+
+  return { userId: session.userId, grant };
 }

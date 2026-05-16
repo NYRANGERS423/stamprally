@@ -1,30 +1,42 @@
 import { logoutAction } from "@/lib/actions/user-auth";
 import { getSiteTitle } from "@/lib/app-config";
+import { getUserSession } from "@/lib/auth/session";
+import { getActiveStewardGrant } from "@/lib/auth/steward";
 import { AppHeader, type AppNavGroup } from "@/components/AppHeader";
 
-const USER_NAV: AppNavGroup[] = [
-  {
-    items: [
-      { href: "/passport", label: "Passport" },
-      { href: "/events", label: "Events" },
-      { href: "/leaderboard", label: "Rank" },
-      { href: "/check-in", label: "Stamp" },
-    ],
-  },
+const BASE_NAV_ITEMS = [
+  { href: "/passport", label: "Passport" },
+  { href: "/events", label: "Events" },
+  { href: "/leaderboard", label: "Rank" },
+  { href: "/check-in", label: "Stamp" },
 ];
 
-// Server component — the `active` prop from earlier passes is gone;
-// AppHeader resolves the active nav item from the URL itself.
+// Server component. The Steward entry only renders when the current
+// session user has an active StewardGrant — so non-stewards never see
+// the menu item even though the route exists site-wide.
 export async function UserHeader({
   showLogout = true,
 }: {
   showLogout?: boolean;
 } = {}) {
-  const siteTitle = (await getSiteTitle()) ?? "Stamprally";
+  const [siteTitle, session] = await Promise.all([
+    getSiteTitle(),
+    getUserSession(),
+  ]);
+  const stewardGrant = session.userId
+    ? await getActiveStewardGrant(session.userId)
+    : null;
+
+  const navItems = [...BASE_NAV_ITEMS];
+  if (stewardGrant) {
+    navItems.push({ href: "/steward", label: "Steward" });
+  }
+  const nav: AppNavGroup[] = [{ items: navItems }];
+
   return (
     <AppHeader
-      siteTitle={siteTitle}
-      navGroups={USER_NAV}
+      siteTitle={siteTitle ?? "Stamprally"}
+      navGroups={nav}
       homeHref="/passport"
       trailing={showLogout ? <LogoutButton /> : null}
     />
