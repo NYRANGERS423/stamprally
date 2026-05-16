@@ -2,32 +2,27 @@
 
 import { useEffect, useState } from "react";
 
-type Mode = "system" | "light" | "dark";
+type Mode = "light" | "dark";
 
 function readMode(): Mode {
-  if (typeof window === "undefined") return "system";
+  if (typeof window === "undefined") return "light";
   const v = window.localStorage.getItem("theme-mode");
-  return v === "light" || v === "dark" ? v : "system";
+  if (v === "light" || v === "dark") return v;
+  // No stored choice yet → fall back to OS preference for the very first
+  // paint, then persist the resolved value on first toggle.
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 }
 
 function applyMode(mode: Mode) {
-  const sysDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const wantDark = mode === "dark" || (mode === "system" && sysDark);
-  document.documentElement.classList.toggle("dark", wantDark);
+  document.documentElement.classList.toggle("dark", mode === "dark");
 }
 
-function nextMode(m: Mode): Mode {
-  if (m === "system") return "light";
-  if (m === "light") return "dark";
-  return "system";
-}
-
-// Compact icon button in the header. Click cycles system → light →
-// dark → system. The current mode is reflected in the icon and the
-// button's title for hover-readers. While in "system" mode the button
-// also listens for OS theme changes and re-applies.
+// Compact icon button in the header. Click toggles between light and
+// dark. Removed the legacy "system" option: only two states now.
 export function ThemeToggle({ className = "" }: { className?: string }) {
-  const [mode, setMode] = useState<Mode>("system");
+  const [mode, setMode] = useState<Mode>("light");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -35,50 +30,31 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     setReady(true);
   }, []);
 
-  useEffect(() => {
-    if (!ready || mode !== "system") return;
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = () => applyMode("system");
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, [mode, ready]);
-
-  function cycle() {
-    const next = nextMode(mode);
-    if (next === "system") {
-      window.localStorage.removeItem("theme-mode");
-    } else {
-      window.localStorage.setItem("theme-mode", next);
-    }
+  function toggle() {
+    const next: Mode = mode === "dark" ? "light" : "dark";
+    window.localStorage.setItem("theme-mode", next);
     applyMode(next);
     setMode(next);
   }
 
-  const label =
-    mode === "system" ? "System theme" : mode === "light" ? "Light theme" : "Dark theme";
+  const label = mode === "light" ? "Switch to dark mode" : "Switch to light mode";
 
   return (
     <button
       type="button"
-      onClick={cycle}
-      title={`Theme: ${mode}. Click to change.`}
+      onClick={toggle}
+      title={label}
       aria-label={label}
       className={
         "inline-flex h-10 w-10 items-center justify-center rounded-md text-stone-500 hover:bg-stone-100 hover:text-stone-900 active:bg-stone-200 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100 " +
         className
       }
     >
-      {/* Render a neutral icon during SSR to avoid a hydration mismatch;
-          the real icon snaps in on the first client-effect render. */}
-      {ready ? <ModeIcon mode={mode} /> : <ModeIcon mode="system" />}
+      {/* Neutral icon during SSR to avoid hydration mismatch; the real
+          icon snaps in on the first client-effect render. */}
+      {ready ? (mode === "dark" ? <MoonIcon /> : <SunIcon />) : <SunIcon />}
     </button>
   );
-}
-
-function ModeIcon({ mode }: { mode: Mode }) {
-  if (mode === "light") return <SunIcon />;
-  if (mode === "dark") return <MoonIcon />;
-  return <DesktopIcon />;
 }
 
 function SunIcon() {
@@ -113,25 +89,6 @@ function MoonIcon() {
       aria-hidden
     >
       <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" />
-    </svg>
-  );
-}
-function DesktopIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect x="3" y="4" width="18" height="12" rx="1" />
-      <line x1="8" y1="20" x2="16" y2="20" />
-      <line x1="12" y1="16" x2="12" y2="20" />
     </svg>
   );
 }

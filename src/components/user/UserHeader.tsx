@@ -16,7 +16,7 @@ interface NavItem {
 const DEFAULT_NAV: NavItem[] = [
   { href: "/passport", label: "Passport", value: "passport" },
   { href: "/events", label: "Events", value: "events" },
-  { href: "/leaderboard", label: "Leaderboard", value: "leaderboard" },
+  { href: "/leaderboard", label: "Rank", value: "leaderboard" },
   { href: "/check-in", label: "Stamp", value: "stamp" },
 ];
 

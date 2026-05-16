@@ -70,9 +70,7 @@ export default async function LeaderboardPage({
       <main className="flex flex-1 flex-col items-center px-4 py-6 sm:px-6 sm:py-8">
         <div className="w-full max-w-3xl space-y-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Leaderboard
-            </h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Rank</h1>
             <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
               {BOARDS.find((b) => b.key === board)?.hint}
             </p>

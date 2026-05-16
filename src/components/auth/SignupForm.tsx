@@ -128,11 +128,7 @@ export function SignupForm({
             ))}
           </select>
         </Field>
-        <Field
-          label="Start date at the company"
-          error={fe.startDate}
-          hint="Locked once you sign up — your &lsquo;Citizen since&rsquo;"
-        >
+        <Field label="Start date at the company" error={fe.startDate}>
           <input
             name="startDate"
             type="date"
@@ -143,13 +139,13 @@ export function SignupForm({
         <Field
           label="Working title"
           error={fe.occupation}
-          hint="Have fun with it — e.g. &lsquo;Coffee Diplomat&rsquo;, &lsquo;Spreadsheet Wizard&rsquo;"
+          hint="Your job title or role at the company."
         >
           <input
             name="occupation"
             maxLength={120}
             className={inputClass}
-            placeholder="Coffee Diplomat"
+            placeholder="e.g. Sales Manager"
           />
         </Field>
       </Section>

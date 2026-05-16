@@ -60,7 +60,7 @@ export function ProfileForm({
           className={inputClass}
         />
         <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-          Your &lsquo;Occupation&rsquo; line — have fun with it.
+          Your job title or role at the company.
         </p>
       </div>
       {state.error && (

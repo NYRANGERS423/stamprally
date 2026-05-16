@@ -171,7 +171,7 @@ export default async function EventDetailPage({
 
         <section className="rounded-xl border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900">
           <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3 dark:border-stone-800">
-            <h2 className="text-sm font-medium">Leaderboard</h2>
+            <h2 className="text-sm font-medium">Rank</h2>
             <span className="text-xs text-stone-500 dark:text-stone-400">
               Top {leaderboard.length}
             </span>
