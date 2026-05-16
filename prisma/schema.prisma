@@ -37,9 +37,11 @@ model User {
   startDate      DateTime
   passportNumber String   @unique
 
-  tags      PassportTag[]
-  stamps    Stamp[]
-  accolades Accolade[]
+  tags             PassportTag[]
+  stamps           Stamp[]        @relation("StampRecipient")
+  stampsAsOperator Stamp[]        @relation("StampOperator")
+  accolades        Accolade[]
+  stewardGrants    StewardGrant[]
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -143,13 +145,25 @@ model AccessCode {
 // Kiosk users (admin-managed; multi-device concurrent login allowed)
 // ─────────────────────────────────────────────────────────────────────────────
 
-model KioskUser {
-  id           String   @id @default(cuid())
-  username     String   @unique
-  passwordHash String
-  label        String?
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
+// Stewards are existing User accounts that an admin has granted
+// permission to operate the stamp + accolade flows (the surfaces that
+// used to live under /kiosk). A user may accumulate many grants over
+// time; the active one is the newest non-revoked, non-expired row.
+// The full table doubles as the audit trail of who got access when.
+model StewardGrant {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grantedByAdmin    String
+  grantedAt         DateTime  @default(now())
+  expiresAt         DateTime?
+  revokedAt         DateTime?
+  revokedReason     String?
+  canStamp          Boolean   @default(true)
+  canGrantAccolades Boolean   @default(true)
+
+  @@index([userId])
+  @@index([revokedAt, expiresAt])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -193,17 +207,23 @@ model Activity {
 }
 
 model Stamp {
-  id         String   @id @default(cuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  activityId String
-  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  stampedAt  DateTime @default(now())
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation("StampRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  activityId     String
+  activity       Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  stampedAt      DateTime @default(now())
+  // Audit attribution: which steward operated the QR-show flow that
+  // led to this stamp, when correlatable. Populated in a later chunk;
+  // nullable so the column is additive and existing rows are untouched.
+  operatorUserId String?
+  operatorUser   User?    @relation("StampOperator", fields: [operatorUserId], references: [id], onDelete: SetNull)
 
   @@unique([userId, activityId])
   @@index([userId])
   @@index([activityId])
   @@index([stampedAt])
+  @@index([operatorUserId])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

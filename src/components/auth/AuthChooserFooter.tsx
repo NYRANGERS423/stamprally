@@ -1,14 +1,13 @@
 import Link from "next/link";
 
-type AuthKind = "user" | "admin" | "kiosk";
+type AuthKind = "user" | "admin";
 
 const SIGNINS: Record<AuthKind, { label: string; href: string }> = {
   user: { label: "User sign-in", href: "/login" },
   admin: { label: "Admin sign-in", href: "/admin/login" },
-  kiosk: { label: "Kiosk sign-in", href: "/kiosk/login" },
 };
 
-const ORDER: AuthKind[] = ["user", "admin", "kiosk"];
+const ORDER: AuthKind[] = ["user", "admin"];
 
 export function AuthChooserFooter({ current }: { current: AuthKind }) {
   const others = ORDER.filter((k) => k !== current);

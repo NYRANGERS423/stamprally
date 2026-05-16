@@ -12,11 +12,6 @@ export interface AdminSession {
   username?: string;
 }
 
-export interface KioskSession {
-  kioskUserId?: string;
-  username?: string;
-}
-
 function requireSecret(): string {
   const s = process.env.AUTH_SECRET;
   if (!s || s.length < 32) {
@@ -62,22 +57,10 @@ function adminOpts(): SessionOptions {
   };
 }
 
-function kioskOpts(): SessionOptions {
-  return {
-    password: requireSecret(),
-    cookieName: "stamprally_kiosk",
-    cookieOptions: { ...baseCookieOptions, maxAge: 60 * 60 * 24 * 7 },
-  };
-}
-
 export async function getUserSession() {
   return getIronSession<UserSession>(await cookies(), userOpts());
 }
 
 export async function getAdminSession() {
   return getIronSession<AdminSession>(await cookies(), adminOpts());
-}
-
-export async function getKioskSession() {
-  return getIronSession<KioskSession>(await cookies(), kioskOpts());
 }

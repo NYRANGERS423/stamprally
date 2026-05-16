@@ -23,7 +23,7 @@ export default async function AdminDashboard() {
     regionCount,
     eventCount,
     activeEventCount,
-    kioskUserCount,
+    stewardCount,
     accoladeTemplateCount,
     stampsTodayCount,
     activeUsersWeek,
@@ -36,7 +36,19 @@ export default async function AdminDashboard() {
     db.region.count(),
     db.event.count(),
     db.event.count({ where: { active: true } }),
-    db.kioskUser.count(),
+    // Active stewards = distinct userIds with a non-revoked,
+    // non-expired grant. Doesn't have a count helper so we count
+    // distinct rows.
+    db.stewardGrant
+      .findMany({
+        where: {
+          revokedAt: null,
+          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+        },
+        select: { userId: true },
+        distinct: ["userId"],
+      })
+      .then((rows) => rows.length),
     db.accoladeTemplate.count(),
     db.stamp.count({ where: { stampedAt: { gte: startOfToday } } }),
     db.stamp
@@ -107,9 +119,9 @@ export default async function AdminDashboard() {
             href="/admin/dropdowns/regions"
           />
           <CatalogRow
-            label="Kiosk users"
-            count={kioskUserCount}
-            href="/admin/kiosk-users"
+            label="Stewards"
+            count={stewardCount}
+            href="/admin/stewards"
           />
           <CatalogRow
             label="Access codes"

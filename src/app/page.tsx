@@ -50,27 +50,6 @@ export default function LandingPage() {
             </svg>
             Admin sign-in
           </Link>
-          <Link
-            href="/kiosk/login"
-            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-stone-200 bg-white px-4 text-xs font-medium text-stone-600 transition-colors hover:bg-stone-50 hover:text-stone-900 dark:border-stone-800 dark:bg-stone-950 dark:text-stone-400 dark:hover:bg-stone-900 dark:hover:text-stone-100"
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
-            >
-              <rect x="4" y="3" width="16" height="14" rx="2" />
-              <line x1="8" y1="21" x2="16" y2="21" />
-              <line x1="12" y1="17" x2="12" y2="21" />
-            </svg>
-            Kiosk sign-in
-          </Link>
         </div>
       </div>
     </main>

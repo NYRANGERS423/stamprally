@@ -15,7 +15,7 @@ const ADMIN_NAV: AppNavGroup[] = [
     title: "People",
     items: [
       { href: "/admin/users", label: "Users" },
-      { href: "/admin/kiosk-users", label: "Kiosk users" },
+      { href: "/admin/stewards", label: "Stewards" },
     ],
   },
   {
