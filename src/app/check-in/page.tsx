@@ -23,8 +23,8 @@ export default async function CheckInLanding() {
               Stamp a new place
             </h1>
             <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
-              Open the camera and scan the kiosk QR. Or type the 4-digit code
-              shown beneath it.
+              Open the camera and scan the activity QR an event helper is
+              showing. Or type the 4-digit code shown beneath it.
             </p>
           </header>
 

@@ -204,7 +204,7 @@ export function PassportSurfaces({
           <AccoladeList accolades={manualAccolades} defaultThemeId={user.theme} />
         ) : (
           <p className="px-4 py-6 text-center text-xs text-stone-500 dark:text-stone-400">
-            No accolades yet. Show your ID at a kiosk to receive one.
+            No accolades yet. Show your ID at an event to receive one.
           </p>
         )}
       </section>

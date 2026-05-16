@@ -21,9 +21,10 @@ export default async function PassportPage({
     stamped?: string;
     already?: string;
     stampError?: string;
+    need?: string;
   }>;
 }) {
-  const { stamped, already, stampError } = await searchParams;
+  const { stamped, already, stampError, need } = await searchParams;
   const flashName = stamped ?? already;
   const flashMode: import("@/components/passport/StampedFlash").FlashMode | null =
     stamped
@@ -105,6 +106,14 @@ export default async function PassportPage({
       )}
       <main className="flex flex-1 flex-col items-center px-4 py-6 sm:px-6 sm:py-10">
         <div className="w-full max-w-md">
+          {need === "steward" && (
+            <div className="mb-4 rounded-xl border border-stone-300 bg-stone-50 p-3 text-xs text-stone-700 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300">
+              Steward access is required for that page. Ask an admin to grant
+              it from{" "}
+              <span className="font-mono">/admin/stewards</span> if you should
+              have it.
+            </div>
+          )}
           <PassportSurfaces
             user={user}
             manualAccolades={manualAccolades}

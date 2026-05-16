@@ -30,7 +30,8 @@ export function CodeEntryForm() {
           className="mt-1 block h-16 w-full rounded-md border-2 border-stone-300 bg-white text-center font-mono text-4xl font-bold tracking-[0.4em] shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-stone-700 dark:bg-stone-900"
         />
         <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
-          Look at the kiosk screen — the code is shown under the QR.
+          Look at the screen showing the QR — the 4-digit code is shown
+          under it.
         </p>
       </div>
       {state.error && (

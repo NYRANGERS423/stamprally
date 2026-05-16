@@ -444,7 +444,7 @@ function ActivityFields({
           maxLength={2000}
           defaultValue={defaults?.description ?? ""}
           className={TEXTAREA_CLASS}
-          placeholder="Short blurb shown on the kiosk screen"
+          placeholder="Short blurb shown on the activity detail sheet"
         />
       </Field>
       <Field label="Location" hint="Optional. Shown on the activity tile.">

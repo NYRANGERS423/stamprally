@@ -66,7 +66,7 @@ export function MyIdSheet({
             onClick={(e) => e.stopPropagation()}
           >
             <p className="text-center font-mono text-[10px] uppercase tracking-[0.25em] text-stone-500 dark:text-stone-400">
-              Show this at a kiosk
+              Show this to receive an accolade
             </p>
             <p className="mt-1 text-center text-lg font-semibold">{name}</p>
             <div className="mx-auto mt-4 aspect-square w-full max-w-[280px] overflow-hidden rounded-lg border border-stone-200 bg-white dark:border-stone-800">
