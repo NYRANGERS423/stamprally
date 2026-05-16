@@ -1,13 +1,21 @@
-import Link from "next/link";
 import { requireUser } from "@/lib/auth/user-guard";
 import { db } from "@/lib/db";
 import { UserHeader } from "@/components/user/UserHeader";
+import { EventCard } from "@/components/events/EventCard";
+import {
+  eventLifecycle,
+  eventStateFor,
+  type EventState,
+} from "@/components/events/EventStatus";
+import { EYEBROW } from "@/lib/ui";
 
 export default async function EventsListPage() {
   const { userId } = await requireUser("/events");
 
+  // Include past/inactive events too so the lifecycle grouping has a
+  // "Past" bucket. The page used to filter to active-only; now state
+  // is computed per-event from dates + active flag.
   const events = await db.event.findMany({
-    where: { active: true },
     orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
     include: {
       activities: { where: { active: true }, select: { id: true } },
@@ -30,57 +38,117 @@ export default async function EventsListPage() {
     );
   }
 
+  const now = new Date();
+  interface RenderedEvent {
+    id: string;
+    slug: string;
+    name: string;
+    startDate: Date | null;
+    state: EventState;
+    myStamps: number;
+    totalActivities: number;
+  }
+  const rendered: RenderedEvent[] = events.map((e) => {
+    const totalActive = e.activities.length;
+    const myCount = stampedPerEvent.get(e.id) ?? 0;
+    const allDone = totalActive > 0 && myCount === totalActive;
+    const state = eventStateFor(e.active, e.startDate, e.endDate, now, allDone);
+    return {
+      id: e.id,
+      slug: e.slug,
+      name: e.name,
+      startDate: e.startDate,
+      state,
+      myStamps: myCount,
+      totalActivities: totalActive,
+    };
+  });
+
+  const buckets = {
+    now: rendered.filter((r) => eventLifecycle(r.state) === "now"),
+    coming: rendered.filter((r) => eventLifecycle(r.state) === "coming"),
+    past: rendered.filter((r) => eventLifecycle(r.state) === "past"),
+  };
+
   return (
     <>
       <UserHeader active="events" />
       <main className="flex flex-1 flex-col items-center px-4 py-6 sm:px-6 sm:py-8">
-        <div className="w-full max-w-3xl">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight">Events</h1>
-          <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
-            Active company events and your progress in each.
-          </p>
-        </div>
-
-        {events.length === 0 ? (
-          <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-            No active events right now. Check back closer to your next company
-            event!
+        <div className="w-full max-w-3xl space-y-8">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Events</h1>
+            <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+              Company events and your progress in each.
+            </p>
           </div>
-        ) : (
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {events.map((e) => {
-              const totalActive = e.activities.length;
-              const myCount = stampedPerEvent.get(e.id) ?? 0;
-              return (
-                <li key={e.id}>
-                  <Link
-                    href={`/events/${e.slug}`}
-                    className="block rounded-xl border border-stone-200 bg-white p-5 transition-colors hover:border-brand-500 hover:bg-brand-50 active:bg-brand-100 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-brand-500 dark:hover:bg-brand-900/30"
-                  >
-                    <div className="text-lg font-semibold">{e.name}</div>
-                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-500 dark:text-stone-400">
-                      {e.startDate && (
-                        <span>
-                          {e.startDate.toLocaleDateString(undefined, {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </span>
-                      )}
-                      <span className="font-medium text-brand-700 dark:text-brand-400">
-                        {myCount} / {totalActive} stamps
-                      </span>
-                    </div>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+
+          {events.length === 0 ? (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+              No events yet. Check back closer to your next company event!
+            </div>
+          ) : (
+            <>
+              <Section
+                title="Happening now"
+                count={buckets.now.length}
+                events={buckets.now}
+              />
+              <Section
+                title="Coming up"
+                count={buckets.coming.length}
+                events={buckets.coming}
+              />
+              <Section
+                title="Past"
+                count={buckets.past.length}
+                events={buckets.past}
+              />
+            </>
+          )}
         </div>
       </main>
     </>
+  );
+}
+
+function Section({
+  title,
+  count,
+  events,
+}: {
+  title: string;
+  count: number;
+  events: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    startDate: Date | null;
+    state: EventState;
+    myStamps: number;
+    totalActivities: number;
+  }>;
+}) {
+  if (events.length === 0) return null;
+  return (
+    <section>
+      <h2 className={`${EYEBROW} mb-3`}>
+        {title} <span className="text-stone-400 dark:text-stone-600">·</span>{" "}
+        {count}
+      </h2>
+      <ul className="grid gap-3 sm:grid-cols-2">
+        {events.map((e) => (
+          <li key={e.id}>
+            <EventCard
+              href={`/events/${e.slug}`}
+              name={e.name}
+              state={e.state}
+              startDate={e.startDate}
+              myStamps={e.myStamps}
+              totalActivities={e.totalActivities}
+            />
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
